@@ -1,4 +1,4 @@
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '')
+import { API_URL } from '../api'
 
 async function solicitar(ruta, { method = 'GET', datos, signal } = {}) {
   const token = localStorage.getItem('token')
