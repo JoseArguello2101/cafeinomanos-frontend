@@ -17,19 +17,31 @@ import NoEncontrada from './pages/NoEncontrada'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import RutaAdmin from './components/RutaAdmin'
-import { ProductosContext, productosIniciales } from './productos'
+import { ProductosContext } from './productos'
+import { listarProductos } from './services/productos'
 
 function App() {
-  const [productos, setProductos] = useState(productosIniciales)
+  const [productos, setProductos] = useState([])
+  const [cargandoProductos, setCargandoProductos] = useState(true)
+  const [errorProductos, setErrorProductos] = useState('')
+  const [revisionProductos, setRevisionProductos] = useState(0)
   const [tema, setTema] = useState(() => {
     const guardado = localStorage.getItem('tema')
     return ['claro', 'oscuro', 'vintage', 'pastel'].includes(guardado) ? guardado : 'claro'
   })
   useEffect(() => { localStorage.setItem('tema', tema) }, [tema])
+  useEffect(() => {
+    const controlador = new AbortController()
+    listarProductos(controlador.signal)
+      .then(lista => { setProductos(lista); setErrorProductos('') })
+      .catch(error => { if (error.name !== 'AbortError') setErrorProductos(error.message) })
+      .finally(() => { if (!controlador.signal.aborted) setCargandoProductos(false) })
+    return () => controlador.abort()
+  }, [revisionProductos])
   const { pathname, search } = useLocation()
   const panel = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/demo/admin')
   return (
-    <ProductosContext.Provider value={{ productos, setProductos }}>
+    <ProductosContext.Provider value={{ productos, setProductos, cargando: cargandoProductos, error: errorProductos, recargar: () => { setCargandoProductos(true); setRevisionProductos(actual => actual + 1) } }}>
     <div className="store site-shell admin-shell" data-theme={tema}>
       <Navbar tema={tema} onTemaChange={setTema} />
       <main className={panel || pathname === '/' ? undefined : 'site-page'}>
@@ -47,7 +59,7 @@ function App() {
           <Route path="/admin" element={<RutaAdmin><Admin key={pathname} tema={tema} /></RutaAdmin>} />
           <Route path="/demo/admin" element={<Admin key={pathname} demo tema={tema} />} />
           <Route path="/admin/productos" element={<RutaAdmin><AdminProductos key={pathname + search} /></RutaAdmin>} />
-          <Route path="/demo/admin/productos" element={<AdminProductos key={pathname + search} />} />
+          <Route path="/demo/admin/productos" element={<AdminProductos key={pathname + search} demo />} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
