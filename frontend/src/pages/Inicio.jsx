@@ -4,7 +4,7 @@ import { useProductos, pesos } from '../productos';
 import '../inicio.css';
 
 function Inicio() {
-  const { productos: inventario } = useProductos();
+  const { productos: inventario, cargando, error } = useProductos();
   const productos = inventario.slice(0, 3).map(producto => ({
     id: producto.id, name: producto.nombre, price: pesos.format(producto.precio), image: producto.imagen
   }));
@@ -32,6 +32,9 @@ function Inicio() {
         <div className="titulo-productos-destacados">
           <h2>PRODUCTOS DESTACADOS</h2>
         </div>
+
+        {cargando && <p className="descripcion">Cargando productos…</p>}
+        {error && <p className="descripcion" role="alert">{error}</p>}
 
         <div className="productos-grid">
           {productos.map(product => (
