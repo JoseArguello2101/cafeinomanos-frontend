@@ -1,6 +1,5 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+import { API_URL } from '../api'
 
 function Navbar({ tema, onTemaChange }) {
   const navigate = useNavigate()
