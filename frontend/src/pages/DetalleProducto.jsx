@@ -5,7 +5,7 @@ import './Catalogo.css'
 function DetalleProducto() {
   const { id } = useParams()
   const { productos, cargando, error, recargar } = useProductos()
-  const producto = productos.find(item => item.id === String(id))
+  const producto = productos.find(item => String(item.id) === String(id))
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
   if (cargando) return <section className="catalogo catalogo-vacio"><h1>Cargando producto…</h1></section>
   if (error) return <section className="catalogo catalogo-vacio"><h1>No pudimos cargar el producto</h1><p>{error}</p><button type="button" onClick={recargar}>Reintentar</button><Link to="/catalogo">Volver al catálogo</Link></section>
