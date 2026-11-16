@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useProductos, categorias, pesos } from '../productos'
 import './Catalogo.css'
+import AgregarAlCarrito from '../components/AgregarAlCarrito'
 
 function Catalogo() {
   const { productos, cargando, error, recargar } = useProductos()
@@ -26,7 +27,7 @@ function Catalogo() {
     {error && <div className="catalogo-vacio" role="alert"><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button type="button" onClick={recargar}>Reintentar</button></div>}
     {!error && !cargando && (visibles.length ? <div className="catalogo-grid">{visibles.map(producto => <article className="catalogo-tarjeta" key={producto.id}>
       <Link to={`/producto/${producto.id}`} aria-label={`Consultar ${producto.nombre}`}><img src={producto.imagen} alt={producto.nombre} /></Link>
-      <div className="catalogo-tarjeta-cuerpo"><span className="eyebrow">{producto.categoria}</span><h2>{producto.nombre}</h2><p>{producto.descripcion}</p><div className="catalogo-precio"><strong>{pesos.format(producto.precio)}</strong><span>{producto.stock ? `${producto.stock} disponibles` : 'Sin stock'}</span></div><div className="catalogo-acciones"><Link to={`/producto/${producto.id}`}>Ver detalles</Link>{usuario?.es_admin && <Link to={`/admin/productos?editar=${encodeURIComponent(producto.id)}`} aria-label={`Editar producto ${producto.nombre}`}>Editar</Link>}</div></div>
+      <div className="catalogo-tarjeta-cuerpo"><span className="eyebrow">{producto.categoria}</span><h2>{producto.nombre}</h2><p>{producto.descripcion}</p><div className="catalogo-precio"><strong>{pesos.format(producto.precio)}</strong><span>{producto.stock ? `${producto.stock} disponibles` : 'Sin stock'}</span></div><div className="catalogo-acciones"><Link to={`/producto/${producto.id}`}>Ver detalles</Link>{usuario?.es_admin && <Link to={`/admin/productos?editar=${encodeURIComponent(producto.id)}`} aria-label={`Editar producto ${producto.nombre}`}>Editar</Link>}</div><AgregarAlCarrito producto={producto} compacto /></div>
     </article>)}</div> : <div className="catalogo-vacio"><h2>No encontramos productos</h2><p>Prueba con otro nombre o cambia los filtros.</p><button type="button" onClick={limpiar}>Mostrar todos los productos</button></div>)}
   </section>
 }
