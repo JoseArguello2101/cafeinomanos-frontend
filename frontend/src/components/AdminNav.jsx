@@ -7,5 +7,6 @@ export default function AdminNav() {
     <NavLink to={base} end>Usuarios</NavLink>
     <NavLink to={`${base}/productos`}>Productos</NavLink>
     <NavLink to={`${base}/contenidos`}>Contenidos</NavLink>
+    {base === '/admin' && <NavLink to="/admin/importar">Importar usuarios</NavLink>}
   </nav>
 }
