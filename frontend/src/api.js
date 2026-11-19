@@ -3,6 +3,7 @@ export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/a
 export async function solicitar(ruta, { method = 'GET', datos, signal, auth = true } = {}) {
   const token = localStorage.getItem('token')
   if (auth && !token) throw new Error('Inicia sesión con una cuenta administradora del backend para realizar esta acción.')
+  const esFormData = typeof FormData !== 'undefined' && datos instanceof FormData
   let respuesta
   try {
     respuesta = await fetch(`${API_URL}${ruta}`, {
@@ -10,9 +11,9 @@ export async function solicitar(ruta, { method = 'GET', datos, signal, auth = tr
       signal,
       headers: {
         ...(auth && token ? { Authorization: `Token ${token}` } : {}),
-        ...(datos ? { 'Content-Type': 'application/json' } : {}),
+        ...(datos && !esFormData ? { 'Content-Type': 'application/json' } : {}),
       },
-      ...(datos ? { body: JSON.stringify(datos) } : {}),
+      ...(datos ? { body: esFormData ? datos : JSON.stringify(datos) } : {}),
     })
   } catch (error) {
     if (error.name === 'AbortError') throw error
