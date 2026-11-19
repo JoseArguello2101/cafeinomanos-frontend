@@ -1,7 +1,18 @@
 import { solicitar } from '../api'
 
+// Convierte la lista de imágenes del backend (strings u objetos { url } / { imagen_url })
+// en un arreglo de URLs únicas, incluyendo la imagen principal en primer lugar.
+function normalizarImagenes(producto) {
+  const extras = Array.isArray(producto?.imagenes) ? producto.imagenes : []
+  const urls = [producto?.imagen_url, ...extras, producto?.imagen]
+    .map(item => (typeof item === 'string' ? item : item?.url || item?.imagen_url || item?.imagen || ''))
+    .map(url => String(url || '').trim())
+    .filter(Boolean)
+  return [...new Set(urls)]
+}
+
 export function normalizarProducto(producto) {
-  const imagenes = Array.isArray(producto?.imagenes) ? producto.imagenes.filter(Boolean) : []
+  const imagenes = normalizarImagenes(producto)
   return {
     id: String(producto?.id ?? producto?.identificador ?? ''),
     nombre: producto?.nombre || '',
@@ -10,7 +21,9 @@ export function normalizarProducto(producto) {
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
     imagen: producto?.imagen_url || imagenes[0] || producto?.imagen || '',
+    imagenes,
     estado: producto?.estado || '',
+    activo: producto?.activo ?? producto?.is_active,
     disponible: producto?.disponible,
     formato: producto?.formato || '',
     destacado: Boolean(producto?.destacado),
