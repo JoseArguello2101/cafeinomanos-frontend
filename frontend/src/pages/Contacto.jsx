@@ -1,5 +1,6 @@
 import { useContenidos } from '../contenidos'
 import DatosContacto from '../components/DatosContacto'
+import FormularioContacto from '../components/FormularioContacto' // 1. Importar el componente
 import './PaginasContenido.css'
 
 function Contacto() {
@@ -17,7 +18,14 @@ function Contacto() {
       )}
       <p>{contenido.texto}</p>
       {contenido.texto_secundario && <p>{contenido.texto_secundario}</p>}
+
+      {/* 1. Formulario interactivo de envío de mensajes */}
+      <FormularioContacto />
+
+      {/* 2. Datos informativos de contacto (Teléfono, Horario, etc.) */}
       <DatosContacto contenido={contenido} />
+
+
     </section>
   )
 }
