@@ -14,6 +14,7 @@ import QuienesSomos from './pages/QuienesSomos'
 import Admin from './pages/Admin'
 import AdminProductos from './pages/AdminProductos'
 import AdminContenidos from './pages/AdminContenidos'
+import AdminImportar from './pages/AdminImportar'
 import NoEncontrada from './pages/NoEncontrada'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -78,6 +79,7 @@ function App() {
           <Route path="/demo/admin/productos" element={<AdminProductos key={pathname + search} demo />} />
           <Route path="/admin/contenidos" element={<RutaAdmin><AdminContenidos key={pathname} tema={tema} /></RutaAdmin>} />
           <Route path="/demo/admin/contenidos" element={<AdminContenidos key={pathname} demo tema={tema} />} />
+          <Route path="/admin/importar" element={<RutaAdmin><AdminImportar tema={tema} /></RutaAdmin>} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
