@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom'
-import { useProductos, pesos } from '../productos'
+import { useProductos, pesos, imagenPorProducto } from '../productos'
 import AgregarAlCarrito from '../components/AgregarAlCarrito'
 import './Catalogo.css'
 
@@ -18,7 +18,7 @@ function DetalleProducto() {
       <Link to="/catalogo">← Volver al catálogo</Link>
 
       <article className="catalogo-detalle">
-        <img src={producto.imagen} alt={producto.nombre} />
+        <img src={producto.imagen} alt={producto.nombre} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }} />
         <div>
           <p className="eyebrow">{producto.categoria}</p>
           <h1 id="detalle-titulo">{producto.nombre}</h1>

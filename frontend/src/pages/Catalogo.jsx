@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useProductos, categorias, pesos } from '../productos'
+import { useProductos, categorias, pesos, imagenPorProducto, priorizarProductosIniciales } from '../productos'
 import './Catalogo.css'
 import AgregarAlCarrito from '../components/AgregarAlCarrito'
 
@@ -11,7 +11,7 @@ function Catalogo() {
   const [disponibles, setDisponibles] = useState(false)
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
   const normalizar = texto => texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const visibles = productos.filter(producto => (!categoria || producto.categoria === categoria) && (!disponibles || producto.stock > 0) && normalizar(`${producto.nombre} ${producto.descripcion}`).includes(normalizar(busqueda.trim())))
+  const visibles = priorizarProductosIniciales(productos).filter(producto => (!categoria || producto.categoria === categoria) && (!disponibles || producto.stock > 0) && normalizar(`${producto.nombre} ${producto.descripcion}`).includes(normalizar(busqueda.trim())))
   function limpiar() { setBusqueda(''); setCategoria(''); setDisponibles(false) }
 
   return <section className="catalogo" aria-labelledby="catalogo-titulo">
@@ -26,7 +26,7 @@ function Catalogo() {
     <p className="catalogo-conteo" role="status" aria-live="polite">{cargando ? 'Cargando productos…' : `${visibles.length} de ${productos.length} productos`}</p>
     {error && <div className="catalogo-vacio" role="alert"><h2>No pudimos cargar el catálogo</h2><p>{error}</p><button type="button" onClick={recargar}>Reintentar</button></div>}
     {!error && !cargando && (visibles.length ? <div className="catalogo-grid">{visibles.map(producto => <article className="catalogo-tarjeta" key={producto.id}>
-      <Link to={`/producto/${producto.id}`} aria-label={`Consultar ${producto.nombre}`}><img src={producto.imagen} alt={producto.nombre} /></Link>
+      <Link to={`/producto/${producto.id}`} aria-label={`Consultar ${producto.nombre}`}><img src={producto.imagen} alt={producto.nombre} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }} /></Link>
       <div className="catalogo-tarjeta-cuerpo"><span className="eyebrow">{producto.categoria}</span><h2>{producto.nombre}</h2><p>{producto.descripcion}</p><div className="catalogo-precio"><strong>{pesos.format(producto.precio)}</strong><span>{producto.stock ? `${producto.stock} disponibles` : 'Sin stock'}</span></div><div className="catalogo-acciones"><Link to={`/producto/${producto.id}`}>Ver detalles</Link>{usuario?.es_admin && <Link to={`/admin/productos?editar=${encodeURIComponent(producto.id)}`} aria-label={`Editar producto ${producto.nombre}`}>Editar</Link>}</div><AgregarAlCarrito producto={producto} compacto /></div>
     </article>)}</div> : <div className="catalogo-vacio"><h2>No encontramos productos</h2><p>Prueba con otro nombre o cambia los filtros.</p><button type="button" onClick={limpiar}>Mostrar todos los productos</button></div>)}
   </section>

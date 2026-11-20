@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import heroImage from '../assets/hero.png';
-import { useProductos, pesos } from '../productos';
+import { useProductos, pesos, imagenPorProducto, priorizarProductosIniciales } from '../productos';
 import { useContenidos } from '../contenidos';
 import '../inicio.css';
 import './PaginasContenido.css';
@@ -9,7 +9,7 @@ function Inicio() {
   const { productos: inventario, cargando, error } = useProductos();
   const { contenidos } = useContenidos();
   const contenido = contenidos.inicio;
-  const productos = inventario.slice(0, 3).map(producto => ({
+  const productos = priorizarProductosIniciales(inventario).slice(0, 3).map(producto => ({
     id: producto.id, name: producto.nombre, price: pesos.format(producto.precio), image: producto.imagen
   }));
   const destino = contenido.boton_url || '/catalogo';
@@ -50,7 +50,7 @@ function Inicio() {
               <h3 className="nombre-producto">{product.name}</h3>
 
               <div className="imagen-producto">
-                <img src={product.image} alt={product.name} />
+                <img src={product.image} alt={product.name} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto({ nombre: product.name }) }} />
               </div>
 
               <div className="fila-producto">

@@ -1,7 +1,9 @@
 import { solicitar } from '../api'
+import { imagenPorProducto } from '../productos'
 
 export function normalizarProducto(producto) {
   const imagenes = Array.isArray(producto?.imagenes) ? producto.imagenes.filter(Boolean) : []
+  const principal = producto?.imagen_url || imagenes[0] || producto?.imagen || ''
   return {
     id: String(producto?.id ?? producto?.identificador ?? ''),
     nombre: producto?.nombre || '',
@@ -9,7 +11,10 @@ export function normalizarProducto(producto) {
     categoria: producto?.categoria || '',
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
-    imagen: producto?.imagen_url || imagenes[0] || producto?.imagen || '',
+    imagen: principal || imagenPorProducto(producto),
+    imagenes: imagenes.length ? imagenes : [imagenPorProducto(producto)],
+    moneda: producto?.moneda || 'CLP',
+    stock_reservado: Number(producto?.stock_reservado) || 0,
     estado: producto?.estado || '',
     disponible: producto?.disponible,
     formato: producto?.formato || '',
@@ -42,4 +47,11 @@ export async function actualizarProducto(id, datos) {
 
 export async function eliminarProducto(id) {
   return solicitar(`/productos/${encodeURIComponent(id)}/`, { method: 'DELETE' })
+}
+
+export async function subirImagen(archivo) {
+  const datos = new FormData()
+  datos.append('archivo', archivo)
+  const resultado = await solicitar('/subir-imagen/', { method: 'POST', datos })
+  return resultado.imagen_url
 }

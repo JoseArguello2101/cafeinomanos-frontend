@@ -1,12 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import AdminNav from '../components/AdminNav'
 import { useSearchParams } from 'react-router-dom'
-import { useProductos, productosIniciales, categorias, pesos } from '../productos'
-import { crearProducto, actualizarProducto } from '../services/productos'
+import { useProductos, productosIniciales, categorias, pesos, imagenPorProducto } from '../productos'
+import { crearProducto, actualizarProducto, subirImagen } from '../services/productos'
 import './Admin.css'
 import './AdminProductos.css'
 
-const vacio = { nombre: '', descripcion: '', categoria: '', precio: '', stock: '', imagen: '' }
+const imagenesVacias = () => ['', '', '', '']
+
+const vacio = {
+  nombre: '',
+  descripcion: '',
+  categoria: '',
+  precio: '',
+  stock: '',
+  moneda: 'CLP',
+  stock_reservado: 0,
+  imagenes: imagenesVacias(),
+}
+
+function aImagenes(producto) {
+  const guardadas = Array.isArray(producto?.imagenes) ? producto.imagenes.filter(Boolean) : []
+  const principal = producto?.imagen || guardadas[0] || ''
+  const lista = guardadas.length ? [...guardadas] : (principal ? [principal] : [])
+  return [...lista, ...Array(Math.max(0, 4 - lista.length)).fill('')].slice(0, 6)
+}
 
 export default function AdminProductos({ demo = false }) {
   const contexto = useProductos()
@@ -15,24 +33,27 @@ export default function AdminProductos({ demo = false }) {
   const aplicar = demo ? setDemoProductos : contexto.setProductos
   const [parametros] = useSearchParams()
   const seleccionado = productos.find(producto => String(producto.id) === String(parametros.get('editar')))
-  const [datos, setDatos] = useState(() => seleccionado ? { ...seleccionado } : vacio)
+  const [datos, setDatos] = useState(() => seleccionado ? { ...seleccionado, imagenes: aImagenes(seleccionado) } : vacio)
   const [editando, setEditando] = useState(seleccionado?.id || null)
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState('')
   const [errorServidor, setErrorServidor] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [subiendo, setSubiendo] = useState(false)
   const formulario = useRef(null)
   const aplicado = useRef(false)
+  const archivoRef = useRef(null)
+  const indiceArchivo = useRef(0)
 
   useEffect(() => {
     if (aplicado.current || !seleccionado) return
     aplicado.current = true
-    setDatos({ ...seleccionado })
+    setDatos({ ...seleccionado, imagenes: aImagenes(seleccionado) })
     setEditando(seleccionado.id)
   }, [seleccionado])
 
   function limpiar() {
-    setDatos(vacio)
+    setDatos({ ...vacio, imagenes: imagenesVacias() })
     setEditando(null)
     setErrores({})
     setErrorServidor('')
@@ -40,11 +61,61 @@ export default function AdminProductos({ demo = false }) {
 
   function editar(producto) {
     limpiar()
-    setDatos({ ...producto })
+    setDatos({ ...producto, imagenes: aImagenes(producto) })
     setEditando(producto.id)
     setMensaje('')
     formulario.current.querySelector('[name="nombre"]').focus()
     formulario.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function actualizarImagen(indice, valor) {
+    setDatos(actual => ({
+      ...actual,
+      imagenes: actual.imagenes.map((imagen, i) => i === indice ? valor : imagen),
+    }))
+  }
+
+  function agregarImagen() {
+    setDatos(actual => actual.imagenes.length >= 6 ? actual : { ...actual, imagenes: [...actual.imagenes, ''] })
+  }
+
+  function quitarImagen(indice) {
+    setDatos(actual => actual.imagenes.length <= 4 ? actual : {
+      ...actual,
+      imagenes: actual.imagenes.filter((_, i) => i !== indice),
+    })
+  }
+
+  function elegirArchivo(indice) {
+    indiceArchivo.current = indice
+    archivoRef.current?.click()
+  }
+
+  async function subirArchivo(evento) {
+    const archivo = evento.target.files?.[0]
+    evento.target.value = ''
+    if (!archivo) return
+    const indice = indiceArchivo.current
+    const tipos = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!tipos.includes(archivo.type)) {
+      setErrores(actual => ({ ...actual, [`imagen-${indice + 1}`]: 'Usa una imagen JPG, PNG, WEBP o GIF.' }))
+      return
+    }
+    if (archivo.size > 5 * 1024 * 1024) {
+      setErrores(actual => ({ ...actual, [`imagen-${indice + 1}`]: 'La imagen no puede superar los 5 MB.' }))
+      return
+    }
+    setSubiendo(true)
+    try {
+      const url = await subirImagen(archivo)
+      actualizarImagen(indice, url)
+      setErrores(actual => ({ ...actual, [`imagen-${indice + 1}`]: '' }))
+      setMensaje(`Imagen ${indice + 1} subida correctamente.`)
+    } catch (error) {
+      setErrores(actual => ({ ...actual, [`imagen-${indice + 1}`]: error.message }))
+    } finally {
+      setSubiendo(false)
+    }
   }
 
   function validarImagen(valor) {
@@ -52,17 +123,14 @@ export default function AdminProductos({ demo = false }) {
     if (!texto) return 'Ingresa la URL de la imagen.'
     if (demo && texto.startsWith('/')) return ''
 
-    // 1. Evitar cadenas Base64 que superan el límite de PostgreSQL
     if (texto.startsWith('data:image')) {
       return 'No se admiten imágenes en Base64. Ingresa un enlace web (http o https).'
     }
 
-    // 2. Validar el límite estricto de models.URLField(max_length=500)
     if (texto.length > 500) {
       return `La URL de la imagen es demasiado larga (${texto.length} caracteres). El límite máximo es 500 caracteres.`
     }
 
-    // 3. Validar estructura de protocolo HTTP/HTTPS
     try {
       const url = new URL(texto)
       if (!['http:', 'https:'].includes(url.protocol)) {
@@ -85,14 +153,35 @@ export default function AdminProductos({ demo = false }) {
     if (!categorias.includes(datos.categoria)) nuevos.categoria = 'Selecciona una categoría.'
     if (!/^\d+$/.test(String(datos.precio)) || !Number.isSafeInteger(Number(datos.precio)) || Number(datos.precio) <= 0) nuevos.precio = 'Ingresa un precio entero mayor que cero, en pesos chilenos.'
     if (!/^\d+$/.test(String(datos.stock)) || !Number.isSafeInteger(Number(datos.stock))) nuevos.stock = 'Ingresa un stock entero de cero o más unidades.'
-    const errorImagen = validarImagen(datos.imagen)
-    if (errorImagen) nuevos.imagen = errorImagen
+    if (!/^\d+$/.test(String(datos.stock_reservado)) || !Number.isSafeInteger(Number(datos.stock_reservado))) nuevos.stock_reservado = 'Ingresa un stock reservado entero de cero o más unidades.'
+
+    const imagenes = datos.imagenes.map(imagen => String(imagen || '').trim())
+    imagenes.forEach((imagen, indice) => {
+      if (indice >= 4 && !imagen) return
+      const error = validarImagen(imagen)
+      if (error) nuevos[`imagen-${indice + 1}`] = error
+    })
+    const cantidadImagenes = imagenes.filter(Boolean).length
+    if (cantidadImagenes < 4 || cantidadImagenes > 6) nuevos.imagenes = 'Debes ingresar entre 4 y 6 imágenes.'
+
     setErrores(nuevos)
     if (Object.keys(nuevos).length) {
       formulario.current.querySelector(`[name="${Object.keys(nuevos)[0]}"]`)?.focus()
       return
     }
-    const producto = { ...datos, id: editando || crypto.randomUUID(), nombre: datos.nombre.trim(), descripcion: datos.descripcion.trim(), precio: Number(datos.precio), stock: Number(datos.stock), imagen: datos.imagen.trim() }
+
+    const producto = {
+      ...datos,
+      id: editando || crypto.randomUUID(),
+      nombre: datos.nombre.trim(),
+      descripcion: datos.descripcion.trim(),
+      precio: Number(datos.precio),
+      stock: Number(datos.stock),
+      moneda: datos.moneda || 'CLP',
+      stock_reservado: Number(datos.stock_reservado) || 0,
+      imagenes: imagenes.filter(Boolean),
+      imagen: imagenes.find(Boolean) || '',
+    }
     setGuardando(true)
     setErrorServidor('')
     try {
@@ -106,10 +195,20 @@ export default function AdminProductos({ demo = false }) {
           categoria: producto.categoria,
           precio: producto.precio,
           stock: producto.stock,
+          moneda: producto.moneda,
+          stock_reservado: producto.stock_reservado,
+          imagenes: producto.imagenes,
           imagen_url: producto.imagen,
         }
         const guardado = editando ? await actualizarProducto(editando, payload) : await crearProducto(payload)
-        const item = { ...guardado, categoria: guardado.categoria || producto.categoria, imagen: guardado.imagen || producto.imagen }
+        const item = {
+          ...guardado,
+          categoria: guardado.categoria || producto.categoria,
+          imagen: guardado.imagen || producto.imagen,
+          imagenes: guardado.imagenes?.length ? guardado.imagenes : producto.imagenes,
+          moneda: guardado.moneda || producto.moneda,
+          stock_reservado: guardado.stock_reservado ?? producto.stock_reservado,
+        }
         aplicar(actual => editando ? actual.map(elemento => elemento.id === editando ? item : elemento) : [...actual, item])
         setMensaje(`${item.nombre}: producto ${editando ? 'actualizado' : 'registrado'} correctamente.`)
       }
@@ -139,16 +238,32 @@ export default function AdminProductos({ demo = false }) {
     <div role="status" aria-live="polite">{mensaje && <p className="producto-aviso">{mensaje}</p>}</div>
     <div className="productos-layout">
       <form ref={formulario} className="producto-form" onSubmit={guardar} noValidate aria-labelledby="producto-form-titulo">
+        <input ref={archivoRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={subirArchivo} hidden />
         <h2 id="producto-form-titulo">{editando ? 'Editar producto' : 'Registrar producto'}</h2>
-        <p className="producto-ayuda">Todos los campos son obligatorios. Precios en CLP.</p>
+        <p className="producto-ayuda">Precios en CLP. El backend exige entre 4 y 6 imágenes; si editas un producto anterior, completa las que falten.</p>
         {campo('nombre', 'Nombre')}
-        <div className="producto-campo"><label htmlFor="producto-descripcion">Descripción</label><textarea id="producto-descripcion" name="descripcion" rows={3} required value={datos.descripcion} aria-invalid={!!errores.descripcion} aria-describedby="producto-error-descripcion" onChange={evento => setDatos({ ...datos, descripcion: evento.target.value })} /><span className="producto-error" id="producto-error-descripcion">{errores.descripcion}</span></div>
-        <div className="producto-campo"><label htmlFor="producto-categoria">Categoría</label><select id="producto-categoria" name="categoria" value={datos.categoria} required aria-invalid={!!errores.categoria} aria-describedby="producto-error-categoria" onChange={evento => setDatos({ ...datos, categoria: evento.target.value })}><option value="">Selecciona una categoría</option>{categorias.map(item => <option key={item}>{item}</option>)}</select><span className="producto-error" id="producto-error-categoria">{errores.categoria}</span></div>
+        <div className="producto-campo"><label htmlFor="producto-descripcion">Descripción</label><textarea id="producto-descripcion" name="descripcion" rows={3} required value={datos.descripcion} aria-invalid={!!errores.descripcion} aria-describedby={errores.descripcion ? 'producto-error-descripcion' : undefined} onChange={evento => setDatos({ ...datos, descripcion: evento.target.value })} /><span className="producto-error" id="producto-error-descripcion">{errores.descripcion}</span></div>
+        <div className="producto-campo"><label htmlFor="producto-categoria">Categoría</label><select id="producto-categoria" name="categoria" value={datos.categoria} required aria-invalid={!!errores.categoria} aria-describedby={errores.categoria ? 'producto-error-categoria' : undefined} onChange={evento => setDatos({ ...datos, categoria: evento.target.value })}><option value="">Selecciona una categoría</option>{categorias.map(item => <option key={item}>{item}</option>)}</select><span className="producto-error" id="producto-error-categoria">{errores.categoria}</span></div>
         <div className="producto-numeros">{campo('precio', 'Precio (CLP)', 'number')}{campo('stock', 'Stock (unidades)', 'number')}</div>
-        <div className="producto-campo"><label htmlFor="producto-imagen">URL de la imagen</label><input id="producto-imagen" name="imagen" type="url" placeholder="https://..." value={datos.imagen} maxLength={500} required aria-invalid={!!errores.imagen} aria-describedby="imagen-ayuda producto-error-imagen" onChange={evento => setDatos({ ...datos, imagen: evento.target.value })} /><small id="imagen-ayuda">Usa una URL pública de imagen (JPG, PNG o WebP). El backend guarda la referencia, no el archivo.</small><span className="producto-error" id="producto-error-imagen">{errores.imagen}</span>{datos.imagen && !errores.imagen && <img className="producto-preview" src={datos.imagen} alt="Vista previa de la imagen del producto" />}</div>
+        {campo('stock_reservado', 'Stock reservado (unidades)', 'number')}
+        <div className="producto-campo">
+          <label>Imágenes del producto (4 a 6)</label>
+          <small>Usa URLs públicas http/https o sube un archivo. La primera será la imagen principal.</small>
+          {datos.imagenes.map((imagen, indice) => <div className="producto-imagen-fila" key={indice}>
+            <div className="producto-imagen-fila-campos">
+              <input id={`producto-imagen-${indice + 1}`} name={`imagen-${indice + 1}`} type="url" placeholder={`https://... (imagen ${indice + 1})`} value={imagen} maxLength={500} required={indice < 4} aria-invalid={!!errores[`imagen-${indice + 1}`]} aria-describedby={errores[`imagen-${indice + 1}`] ? `producto-error-imagen-${indice + 1}` : undefined} onChange={evento => actualizarImagen(indice, evento.target.value)} />
+              <button type="button" disabled={subiendo} aria-label={`Subir archivo para la imagen ${indice + 1}`} onClick={() => elegirArchivo(indice)}>{subiendo ? 'Subiendo…' : 'Subir archivo'}</button>
+              {datos.imagenes.length > 4 && <button type="button" aria-label={`Quitar imagen ${indice + 1}`} onClick={() => quitarImagen(indice)}>Quitar</button>}
+            </div>
+            {errores[`imagen-${indice + 1}`] && <span className="producto-error" id={`producto-error-imagen-${indice + 1}`}>{errores[`imagen-${indice + 1}`]}</span>}
+            {imagen && !errores[`imagen-${indice + 1}`] && <img className="producto-preview" src={imagen} alt={`Vista previa de la imagen ${indice + 1}`} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(datos) }} />}
+          </div>)}
+          {datos.imagenes.length < 6 && <button type="button" onClick={agregarImagen}>Agregar imagen</button>}
+          {errores.imagenes && <span className="producto-error">{errores.imagenes}</span>}
+        </div>
         <div className="producto-form-acciones"><button type="submit" className="primary" disabled={guardando}>{guardando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Registrar producto'}</button><button type="button" disabled={guardando} onClick={() => { limpiar(); setMensaje(''); formulario.current.querySelector('[name="nombre"]').focus() }}>{editando ? 'Cancelar edición' : 'Limpiar formulario'}</button></div>
       </form>
-      <section className="productos-inventario" aria-labelledby="inventario-titulo"><h2 id="inventario-titulo">Productos registrados <small>({productos.length})</small></h2><p className="producto-ayuda">Selecciona un producto para modificar sus datos.</p>{!demo && contexto.cargando && <p role="status">Cargando productos…</p>}<div className="productos-items">{productos.map(producto => <article className="producto-resumen" key={producto.id}>{producto.imagen && <img src={producto.imagen} alt={producto.nombre} />}<div><small>{producto.categoria}</small><h3>{producto.nombre}</h3><p>{producto.descripcion}</p><strong>{pesos.format(producto.precio)}</strong><p>{producto.stock === 0 ? 'Sin stock' : `${producto.stock} unidades disponibles`}</p><button type="button" aria-label={`Editar producto ${producto.nombre}`} onClick={() => editar(producto)}>Editar</button></div></article>)}</div></section>
+      <section className="productos-inventario" aria-labelledby="inventario-titulo"><h2 id="inventario-titulo">Productos registrados <small>({productos.length})</small></h2><p className="producto-ayuda">Selecciona un producto para modificar sus datos.</p>{!demo && contexto.cargando && <p role="status">Cargando productos…</p>}<div className="productos-items">{productos.map(producto => <article className="producto-resumen" key={producto.id}>{producto.imagen && <img src={producto.imagen} alt={producto.nombre} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }} />}<div><small>{producto.categoria}</small><h3>{producto.nombre}</h3><p>{producto.descripcion}</p><strong>{pesos.format(producto.precio)}</strong><p>{producto.stock === 0 ? 'Sin stock' : `${producto.stock} unidades disponibles`}</p><button type="button" aria-label={`Editar producto ${producto.nombre}`} onClick={() => editar(producto)}>Editar</button></div></article>)}</div></section>
     </div>
   </section>
 }
