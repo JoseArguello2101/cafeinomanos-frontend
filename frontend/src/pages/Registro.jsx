@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { solicitar } from '../api'
 
 function Registro() {
-  const navigate = useNavigate()
   const location = useLocation()
   // si venía del carrito, después de registrarse vuelve ahí
   const desde = location.state?.desde || '/'
@@ -11,13 +10,12 @@ function Registro() {
   const [datos, setDatos] = useState({
     nombre: '',
     apellido: '',
-    email: '',
-    password: '',
-    confirmar: ''
+    email: ''
   })
   const [errores, setErrores] = useState({})
   const [errorServidor, setErrorServidor] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [registrado, setRegistrado] = useState(false)
 
   function cambiar(e) {
     setDatos({ ...datos, [e.target.name]: e.target.value })
@@ -32,8 +30,6 @@ function Registro() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email.trim())) {
       nuevos.email = 'El correo no tiene un formato válido'
     }
-    if (datos.password.length < 8) nuevos.password = 'La contraseña debe tener al menos 8 caracteres'
-    if (datos.confirmar !== datos.password) nuevos.confirmar = 'Las contraseñas no coinciden'
     return nuevos
   }
 
@@ -47,20 +43,18 @@ function Registro() {
 
     setEnviando(true)
     try {
-      const resultado = await solicitar('/registro/', {
+      await solicitar('/registro/', {
         method: 'POST',
         auth: false,
         datos: {
           nombre: datos.nombre.trim(),
           apellido: datos.apellido.trim(),
-          email: datos.email.trim(),
-          password: datos.password,
-        },
+          email: datos.email.trim()
+        }
       })
 
-      localStorage.setItem('token', resultado.token)
-      localStorage.setItem('usuario', JSON.stringify(resultado.usuario))
-      navigate(desde)
+      // la cuenta queda pendiente: se activa con el enlace enviado por correo
+      setRegistrado(true)
     } catch (error) {
       setErrorServidor(error.message || 'No se pudo crear la cuenta. Intenta de nuevo.')
     } finally {
@@ -68,11 +62,33 @@ function Registro() {
     }
   }
 
+  if (registrado) {
+    return (
+      <div className="container py-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <h1 className="mb-3">Revisa tu correo</h1>
+            <div className="alert alert-success">
+              Te enviamos un enlace de activación a <strong>{datos.email.trim()}</strong>.
+              El enlace vence en 24 horas y solo puede usarse una vez.
+            </div>
+            <p className="mb-0">
+              ¿Ya tienes cuenta? <Link to="/login" state={{ desde }}>Inicia sesión</Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-md-6">
           <h1 className="mb-4">Crear cuenta</h1>
+          <p className="text-muted">
+            Registra tus datos y te enviaremos un enlace para activar tu cuenta y definir tu contraseña.
+          </p>
 
           {errorServidor && <div className="alert alert-danger">{errorServidor}</div>}
 
@@ -115,34 +131,6 @@ function Registro() {
                 onChange={cambiar}
               />
               {errores.email && <div className="invalid-feedback">{errores.email}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="password" className="form-label">Contraseña</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                className={`form-control ${errores.password ? 'is-invalid' : ''}`}
-                value={datos.password}
-                onChange={cambiar}
-              />
-              {errores.password && <div className="invalid-feedback">{errores.password}</div>}
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="confirmar" className="form-label">Repetir contraseña</label>
-              <input
-                id="confirmar"
-                name="confirmar"
-                type="password"
-                autoComplete="new-password"
-                className={`form-control ${errores.confirmar ? 'is-invalid' : ''}`}
-                value={datos.confirmar}
-                onChange={cambiar}
-              />
-              {errores.confirmar && <div className="invalid-feedback">{errores.confirmar}</div>}
             </div>
 
             <button type="submit" className="btn btn-primary w-100" disabled={enviando}>
