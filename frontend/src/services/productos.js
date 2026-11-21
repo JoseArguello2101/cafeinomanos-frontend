@@ -1,4 +1,8 @@
 import { solicitar } from '../api'
+import { imagenPorProducto } from '../productos'
+
+/** Avisa a la aplicación que el inventario cambió tras un pedido. */
+export const EVENTO_PRODUCTOS = 'productos:actualizados'
 
 // Convierte la lista de imágenes del backend (strings u objetos { url } / { imagen_url })
 // en un arreglo de URLs únicas, incluyendo la imagen principal en primer lugar.
@@ -13,6 +17,7 @@ function normalizarImagenes(producto) {
 
 export function normalizarProducto(producto) {
   const imagenes = normalizarImagenes(producto)
+  const principal = imagenes[0] || ''
   return {
     id: String(producto?.id ?? producto?.identificador ?? ''),
     nombre: producto?.nombre || '',
@@ -20,8 +25,10 @@ export function normalizarProducto(producto) {
     categoria: producto?.categoria || '',
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
-    imagen: producto?.imagen_url || imagenes[0] || producto?.imagen || '',
-    imagenes,
+    imagen: principal || imagenPorProducto(producto),
+    imagenes: imagenes.length ? imagenes : [imagenPorProducto(producto)],
+    moneda: producto?.moneda || 'CLP',
+    stock_reservado: Number(producto?.stock_reservado) || 0,
     estado: producto?.estado || '',
     activo: producto?.activo ?? producto?.is_active,
     disponible: producto?.disponible,
@@ -55,4 +62,11 @@ export async function actualizarProducto(id, datos) {
 
 export async function eliminarProducto(id) {
   return solicitar(`/productos/${encodeURIComponent(id)}/`, { method: 'DELETE' })
+}
+
+export async function subirImagen(archivo) {
+  const datos = new FormData()
+  datos.append('archivo', archivo)
+  const resultado = await solicitar('/subir-imagen/', { method: 'POST', datos })
+  return resultado.imagen_url
 }

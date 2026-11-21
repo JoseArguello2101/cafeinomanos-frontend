@@ -34,5 +34,25 @@ export function estadoProducto(producto) {
   return { disponible: true, etiqueta: `Disponible · ${producto.stock} unidades`, tipo: 'disponible' }
 }
 
+export const nombresProductosIniciales = productosIniciales.map(producto => producto.nombre)
+
+export function priorizarProductosIniciales(lista) {
+  return [
+    ...nombresProductosIniciales.map(nombre => lista.find(producto => producto.nombre === nombre)).filter(Boolean),
+    ...lista.filter(producto => !nombresProductosIniciales.includes(producto.nombre)),
+  ]
+}
+
+export function imagenPorProducto(producto) {
+  const texto = `${producto?.nombre || producto?.name || ''} ${producto?.descripcion || ''}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+  if (texto.includes('capuccino') || texto.includes('cappuccino')) return capuccino
+  if (texto.includes('mocha')) return mocha
+  if (texto.includes('macchiato')) return macchiato
+  return capuccino
+}
+
 export const ProductosContext = createContext(null)
 export const useProductos = () => useContext(ProductosContext)

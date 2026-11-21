@@ -26,7 +26,7 @@ function DetalleProducto() {
           <p className="eyebrow">{producto.categoria}</p>
           <h1 id="detalle-titulo">{producto.nombre}</h1>
           <p>{producto.descripcion}</p>
-          <strong className="detalle-precio">{pesos.format(producto.precio)} <small>{moneda.codigo}</small></strong>
+          <strong className="detalle-precio">{pesos.format(producto.precio)} <small>{producto.moneda || moneda.codigo}</small></strong>
           <p className={`detalle-estado detalle-estado-${estado.tipo}`} role="status">{estado.etiqueta}</p>
           {estado.tipo === 'inactivo' && <p className="catalogo-demo">Este producto no se encuentra activo y no puede comprarse por ahora.</p>}
 

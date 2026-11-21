@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { API_URL } from '../api'
+import { solicitar } from '../api'
 
 function Registro() {
   const navigate = useNavigate()
@@ -47,30 +47,22 @@ function Registro() {
 
     setEnviando(true)
     try {
-      const respuesta = await fetch(`${API_URL}/registro/`, {
+      const resultado = await solicitar('/registro/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        auth: false,
+        datos: {
           nombre: datos.nombre.trim(),
           apellido: datos.apellido.trim(),
           email: datos.email.trim(),
-          password: datos.password
-        })
+          password: datos.password,
+        },
       })
-      const resultado = await respuesta.json()
-
-      if (!respuesta.ok) {
-        // el backend manda un texto o una lista de mensajes
-        const mensaje = Array.isArray(resultado.error) ? resultado.error.join(' ') : resultado.error
-        setErrorServidor(mensaje || 'No se pudo crear la cuenta.')
-        return
-      }
 
       localStorage.setItem('token', resultado.token)
       localStorage.setItem('usuario', JSON.stringify(resultado.usuario))
       navigate(desde)
-    } catch {
-      setErrorServidor('No se pudo conectar con el servidor. Intenta de nuevo.')
+    } catch (error) {
+      setErrorServidor(error.message || 'No se pudo crear la cuenta. Intenta de nuevo.')
     } finally {
       setEnviando(false)
     }

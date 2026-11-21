@@ -1,3 +1,103 @@
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: #faf7f0; color: #38271e; font-family: 'Trebuchet MS', 'Segoe UI', sans-serif; }
 #root { max-width: 1126px; margin: 0 auto; min-height: 100vh; }
+
+/* Tokens de tema y estilos base del contenedor de la tienda. */
+.store {
+  --bg: #faf7f0;
+  --surface: #fffdf9;
+  --ink: #38271e;
+  --muted: #75675c;
+  --line: #dfd4c7;
+  --accent: #65452f;
+  --button: #fff9ef;
+  --soft: #eee5da;
+
+  margin: 0;
+  min-height: 510px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font: 15px/1.6 'Trebuchet MS', 'Segoe UI', sans-serif;
+}
+
+.store[data-theme='oscuro'] {
+  --bg: #211b17;
+  --surface: #2c241e;
+  --ink: #f7f0e6;
+  --muted: #c5b5a3;
+  --line: #685445;
+  --accent: #d7b28d;
+  --button: #211b17;
+  --soft: #382d24;
+}
+
+.store[data-theme='vintage'] {
+  --bg: #eee2c9;
+  --surface: #f7eedb;
+  --ink: #493727;
+  --muted: #756046;
+  --line: #c6b594;
+  --accent: #745033;
+  --button: #fff5df;
+  --soft: #dfceb0;
+}
+
+.store[data-theme='pastel'] {
+  --bg: #fcf5f0;
+  --surface: #fffdfb;
+  --ink: #533d39;
+  --muted: #7c6560;
+  --line: #e1cbc6;
+  --accent: #795c60;
+  --button: #fffaf7;
+  --soft: #eedcda;
+}
+
+.store button,
+.store input,
+.store select,
+.store textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.store button,
+.store a { touch-action: manipulation; }
+.store button { cursor: pointer; }
+.store a { color: inherit; }
+.store button:hover { filter: brightness(0.95); }
+
+.store button:focus-visible,
+.store a:focus-visible,
+.store input:focus-visible,
+.store select:focus-visible,
+.store textarea:focus-visible {
+  outline: 3px solid #93623b;
+  outline-offset: 4px;
+}
+
+.store h1, .store h2, .store h3, .store p { margin: 0; }
+.store h1, .store h2, .store h3 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 400;
+  line-height: 1.2;
+}
+.store h1 { font-size: clamp(30px, 4vw, 52px); }
+.store h2 { font-size: 30px; }
+.store h3 { font-size: 22px; }
+.store [hidden] { display: none !important; }
+
+.store .eyebrow {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}

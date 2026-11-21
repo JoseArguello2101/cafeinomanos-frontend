@@ -13,12 +13,16 @@ import Contacto from './pages/Contacto'
 import QuienesSomos from './pages/QuienesSomos'
 import Admin from './pages/Admin'
 import AdminProductos from './pages/AdminProductos'
+import AdminContenidos from './pages/AdminContenidos'
+import AdminImportar from './pages/AdminImportar'
 import NoEncontrada from './pages/NoEncontrada'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import RutaAdmin from './components/RutaAdmin'
 import { ProductosContext } from './productos'
-import { listarProductos } from './services/productos'
+import { ContenidosContext } from './contenidos'
+import { EVENTO_PRODUCTOS, listarProductos } from './services/productos'
+import { contenidosIniciales, listarContenidos } from './services/contenidos'
 
 function App() {
   const [productos, setProductos] = useState([])
@@ -38,10 +42,29 @@ function App() {
       .finally(() => { if (!controlador.signal.aborted) setCargandoProductos(false) })
     return () => controlador.abort()
   }, [revisionProductos])
+
+  useEffect(() => {
+    const actualizar = () => setRevisionProductos(revision => revision + 1)
+    window.addEventListener(EVENTO_PRODUCTOS, actualizar)
+    return () => window.removeEventListener(EVENTO_PRODUCTOS, actualizar)
+  }, [])
+
+  const [contenidos, setContenidos] = useState(contenidosIniciales)
+  const [errorContenidos, setErrorContenidos] = useState('')
+  const [revisionContenidos, setRevisionContenidos] = useState(0)
+  useEffect(() => {
+    const controlador = new AbortController()
+    listarContenidos(controlador.signal)
+      .then(datos => { setContenidos(datos); setErrorContenidos('') })
+      .catch(error => { if (error.name !== 'AbortError') setErrorContenidos(error.message) })
+    return () => controlador.abort()
+  }, [revisionContenidos])
+
   const { pathname, search } = useLocation()
   const panel = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/demo/admin')
   return (
     <ProductosContext.Provider value={{ productos, setProductos, cargando: cargandoProductos, error: errorProductos, recargar: () => { setCargandoProductos(true); setRevisionProductos(actual => actual + 1) } }}>
+    <ContenidosContext.Provider value={{ contenidos, error: errorContenidos, recargar: () => { setRevisionContenidos(actual => actual + 1) } }}>
     <div className="store site-shell admin-shell" data-theme={tema}>
       <Navbar tema={tema} onTemaChange={setTema} />
       <main className={panel || pathname === '/' ? undefined : 'site-page'}>
@@ -60,11 +83,15 @@ function App() {
           <Route path="/demo/admin" element={<Admin key={pathname} demo tema={tema} />} />
           <Route path="/admin/productos" element={<RutaAdmin><AdminProductos key={pathname + search} /></RutaAdmin>} />
           <Route path="/demo/admin/productos" element={<AdminProductos key={pathname + search} demo />} />
+          <Route path="/admin/contenidos" element={<RutaAdmin><AdminContenidos key={pathname} tema={tema} /></RutaAdmin>} />
+          <Route path="/demo/admin/contenidos" element={<AdminContenidos key={pathname} demo tema={tema} />} />
+          <Route path="/admin/importar" element={<RutaAdmin><AdminImportar tema={tema} /></RutaAdmin>} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
       <Footer />
     </div>
+    </ContenidosContext.Provider>
     </ProductosContext.Provider>
   )
 }

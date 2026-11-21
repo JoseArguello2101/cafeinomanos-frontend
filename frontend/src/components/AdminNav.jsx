@@ -6,5 +6,7 @@ export default function AdminNav() {
   return <nav className="admin-secciones" aria-label="Secciones de administración">
     <NavLink to={base} end>Usuarios</NavLink>
     <NavLink to={`${base}/productos`}>Productos</NavLink>
+    <NavLink to={`${base}/contenidos`}>Contenidos</NavLink>
+    {base === '/admin' && <NavLink to="/admin/importar">Importar usuarios</NavLink>}
   </nav>
 }

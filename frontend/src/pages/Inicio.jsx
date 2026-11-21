@@ -1,29 +1,39 @@
 import { Link } from 'react-router-dom';
 import heroImage from '../assets/hero.png';
-import { useProductos, pesos } from '../productos';
+import { useProductos, pesos, imagenPorProducto, priorizarProductosIniciales } from '../productos';
+import { useContenidos } from '../contenidos';
+import AgregarAlCarrito from '../components/AgregarAlCarrito';
 import '../inicio.css';
+import './PaginasContenido.css';
 
 function Inicio() {
   const { productos: inventario, cargando, error } = useProductos();
-  const productos = inventario.slice(0, 3).map(producto => ({
+  const { contenidos } = useContenidos();
+  const contenido = contenidos.inicio;
+  const productos = priorizarProductosIniciales(inventario).slice(0, 3).map(producto => ({
+    ...producto,
     id: producto.id, name: producto.nombre, price: pesos.format(producto.precio), image: producto.imagen
   }));
+  const destino = contenido.boton_url || '/catalogo';
+  const boton = /^https?:\/\//.test(destino)
+    ? <a href={destino} className="btn btn-primary btn-hero">{contenido.boton_texto}</a>
+    : <Link to={destino} className="btn btn-primary btn-hero">{contenido.boton_texto}</Link>;
 
   return (
     <>
       <section className="hero">
         <div className="contenedor-hero">
           <div className="imagen-hero">
-            <img src={heroImage} alt="Fotografía del café" />
+            <img src={contenido.imagen_url || heroImage} alt={contenido.imagen_alt || 'Fotografía del café'} />
           </div>
           <div className="hero-content">
             <div className="hero-texto">
-              <h1 className="titulo">EL PARAÍSO A UN SORBO.</h1>
-              <p className="descripcion">
-                El café puede ser el elemento fundamental para el día a día, por eso convierte tu vida en un paraíso jugoso y perfecto.
-              </p>
+              <h1 className="titulo">{contenido.titulo}</h1>
+              {contenido.subtitulo && <p className="pagina-subtitulo">{contenido.subtitulo}</p>}
+              <p className="descripcion">{contenido.texto}</p>
+              {contenido.texto_secundario && <p className="descripcion">{contenido.texto_secundario}</p>}
             </div>
-            <Link to="/catalogo" className="btn btn-primary btn-hero">Ver más</Link>
+            {contenido.boton_texto && boton}
           </div>
         </div>
       </section>
@@ -42,13 +52,13 @@ function Inicio() {
               <h3 className="nombre-producto">{product.name}</h3>
 
               <div className="imagen-producto">
-                <img src={product.image} alt={product.name} />
+                <img src={product.image} alt={product.name} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto({ nombre: product.name }) }} />
               </div>
 
               <div className="fila-producto">
                 <strong className="precio">{product.price}</strong>
-                <button className="btn-producto">Añadir a carrito</button>
               </div>
+              <AgregarAlCarrito producto={product} rapido compacto />
 
               <Link to={`/producto/${product.id}`} className="ver-detalles">
                 Ver detalles

@@ -1,5 +1,25 @@
+import { useContenidos } from '../contenidos'
+import DatosContacto from '../components/DatosContacto'
+import './PaginasContenido.css'
+
 function QuienesSomos() {
-  return <h1>Quiénes somos</h1>
+  const { contenidos } = useContenidos()
+  const contenido = contenidos.quienes_somos
+
+  return (
+    <section className="pagina-contenido" aria-labelledby="quienes-titulo">
+      <header>
+        <h1 id="quienes-titulo">{contenido.titulo}</h1>
+        {contenido.subtitulo && <p className="pagina-subtitulo">{contenido.subtitulo}</p>}
+      </header>
+      {contenido.imagen_url && (
+        <img className="pagina-imagen" src={contenido.imagen_url} alt={contenido.imagen_alt || contenido.titulo} />
+      )}
+      <p>{contenido.texto}</p>
+      {contenido.texto_secundario && <p>{contenido.texto_secundario}</p>}
+      <DatosContacto contenido={contenido} />
+    </section>
+  )
 }
 
 export default QuienesSomos
