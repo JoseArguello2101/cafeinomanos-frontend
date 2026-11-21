@@ -24,6 +24,7 @@ function normalizarItem(item) {
     cantidad: Number(item?.cantidad) || 0,
     precio_unitario: Number(item?.precio_unitario) || 0,
     subtotal: Number(item?.subtotal) || 0,
+    stock: Number(item?.stock) || 0,
     imagen_url: item?.imagen_url || imagenPorProducto({ nombre }),
   }
 }
@@ -39,6 +40,21 @@ export async function agregarAlCarrito(productoId, cantidad = 1) {
       producto_id: Number(productoId),
       cantidad: Number(cantidad),
       session_id: sessionIdGuardado,
+    },
+  })
+  recordarSesion(resultado?.session_id)
+  return resultado
+}
+
+/** Cambia la cantidad de una línea del carrito sin descontar inventario. */
+export async function actualizarCantidad(itemId, cantidad) {
+  const resultado = await solicitar(`/carrito/actualizar/${itemId}/`, {
+    method: 'PATCH',
+    auth: false,
+    conToken: true,
+    datos: {
+      cantidad: Number(cantidad),
+      session_id: obtenerSesionCarrito(),
     },
   })
   recordarSesion(resultado?.session_id)
