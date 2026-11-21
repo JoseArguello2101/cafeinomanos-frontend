@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { API_URL } from '../api'
+import { solicitar } from '../api'
+import { EVENTO_CARRITO } from '../services/carrito'
 
 function Login() {
   const navigate = useNavigate()
@@ -41,6 +42,7 @@ function Login() {
         id: 'admin1-demo', nombre: 'Admin1', apellido: 'Demo',
         email: 'admin1@ejemplo.cl', es_admin: true, demo: true,
       }))
+      window.dispatchEvent(new Event(EVENTO_CARRITO))
       navigate('/admin')
       return
     }
@@ -51,28 +53,23 @@ function Login() {
 
     setEnviando(true)
     try {
-      const respuesta = await fetch(`${API_URL}/login/`, {
+      const resultado = await solicitar('/login/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
+        auth: false,
+        datos: { email: email.trim(), password },
       })
-      const resultado = await respuesta.json()
-
-      if (!respuesta.ok) {
-        setErrorServidor(resultado.error || 'No se pudo iniciar sesión.')
-        return
-      }
 
       localStorage.setItem('token', resultado.token)
       localStorage.setItem('usuario', JSON.stringify(resultado.usuario))
+      window.dispatchEvent(new Event(EVENTO_CARRITO))
       // el admin va a su panel; el cliente vuelve a donde venía, pero nunca al panel
       if (resultado.usuario.es_admin) {
         navigate('/admin')
       } else {
         navigate(desde.startsWith('/admin') ? '/' : desde)
       }
-    } catch {
-      setErrorServidor('No se pudo conectar con el servidor. Intenta de nuevo.')
+    } catch (error) {
+      setErrorServidor(error.message || 'No se pudo iniciar sesión. Intenta de nuevo.')
     } finally {
       setEnviando(false)
     }

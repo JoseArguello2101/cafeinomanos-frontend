@@ -9,7 +9,6 @@ import {
   listarContenidos,
   normalizarContenido,
 } from '../services/contenidos'
-import '../wireframe.css'
 import './Admin.css'
 import './AdminContenidos.css'
 

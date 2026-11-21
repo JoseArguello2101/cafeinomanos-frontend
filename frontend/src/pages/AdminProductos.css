@@ -24,6 +24,7 @@
 .producto-preview { max-width: 100%; height: 140px; object-fit: contain; background: var(--soft); border: 1px solid var(--line); }
 .producto-form-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .productos-admin button:disabled { opacity: .5; cursor: wait; }
+.productos-admin button.primary { background: var(--accent); border-color: var(--accent); color: var(--button); }
 .productos-items { display: grid; gap: 16px; }
 .producto-resumen { display: grid; grid-template-columns: 90px 1fr; gap: 14px; padding: 14px; border: 1px solid var(--line); min-width: 0; }
 .producto-resumen > img { width: 90px; height: 90px; object-fit: cover; border-radius: 4px; }

@@ -1,4 +1,4 @@
-/* Paletas y tipografías compartidas con los bocetos del sprint 1 (wireframe.css). */
+/* Paletas y tipografías del panel; los tokens de tema están en index.css. */
 .admin-panel.store {
   width: calc(100% - 40px);
   max-width: 1060px;

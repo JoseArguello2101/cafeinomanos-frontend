@@ -21,7 +21,7 @@ import Footer from './components/Footer'
 import RutaAdmin from './components/RutaAdmin'
 import { ProductosContext } from './productos'
 import { ContenidosContext } from './contenidos'
-import { listarProductos } from './services/productos'
+import { EVENTO_PRODUCTOS, listarProductos } from './services/productos'
 import { contenidosIniciales, listarContenidos } from './services/contenidos'
 
 function App() {
@@ -42,6 +42,12 @@ function App() {
       .finally(() => { if (!controlador.signal.aborted) setCargandoProductos(false) })
     return () => controlador.abort()
   }, [revisionProductos])
+
+  useEffect(() => {
+    const actualizar = () => setRevisionProductos(revision => revision + 1)
+    window.addEventListener(EVENTO_PRODUCTOS, actualizar)
+    return () => window.removeEventListener(EVENTO_PRODUCTOS, actualizar)
+  }, [])
 
   const [contenidos, setContenidos] = useState(contenidosIniciales)
   const [errorContenidos, setErrorContenidos] = useState('')

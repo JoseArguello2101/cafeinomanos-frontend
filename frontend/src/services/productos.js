@@ -1,6 +1,9 @@
 import { solicitar } from '../api'
 import { imagenPorProducto } from '../productos'
 
+/** Avisa a la aplicación que el inventario cambió tras un pedido. */
+export const EVENTO_PRODUCTOS = 'productos:actualizados'
+
 export function normalizarProducto(producto) {
   const imagenes = Array.isArray(producto?.imagenes) ? producto.imagenes.filter(Boolean) : []
   const principal = producto?.imagen_url || imagenes[0] || producto?.imagen || ''

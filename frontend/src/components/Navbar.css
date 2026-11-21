@@ -141,6 +141,28 @@
   vertical-align: -0.2em;
 }
 
+.site-shell .nav-carrito {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.site-shell .nav-carrito-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--nav-acento);
+  color: var(--nav-acento-texto);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .site-shell .nav-centro a {
   font-size: 1.35rem;
   font-weight: 800;

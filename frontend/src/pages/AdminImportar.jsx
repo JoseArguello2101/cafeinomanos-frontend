@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import AdminNav from '../components/AdminNav'
 import { importarUsuarios } from '../services/importacion'
-import '../wireframe.css'
 import './Admin.css'
 
 export default function AdminImportar({ tema = 'claro' }) {

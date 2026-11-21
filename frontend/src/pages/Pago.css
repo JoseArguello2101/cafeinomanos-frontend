@@ -1,0 +1,17 @@
+/* Estilos exclusivos del formulario de pago. */
+.compra-formulario { display: grid; gap: 16px; margin-top: 20px; }
+.compra-formulario label { display: grid; gap: 6px; font-size: 13px; }
+.compra-formulario input, .compra-formulario select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+}
+.compra-formulario .campo-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compra-error { color: #b00020; font-size: 13px; margin: 0 !important; }
+@media (max-width: 600px) {
+  .compra-formulario .campo-doble { grid-template-columns: 1fr; }
+}

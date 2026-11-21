@@ -1,0 +1,4 @@
+/* Estilos exclusivos de la página de confirmación. */
+.compra-code { font-size: 26px; letter-spacing: 1px; margin: 8px 0 4px !important; }
+.compra-datos { display: grid; gap: 6px; font-size: 13px; margin: 16px 0 !important; }
+.compra-datos span { color: var(--muted); }

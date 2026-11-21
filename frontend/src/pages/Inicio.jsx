@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import heroImage from '../assets/hero.png';
 import { useProductos, pesos, imagenPorProducto, priorizarProductosIniciales } from '../productos';
 import { useContenidos } from '../contenidos';
+import AgregarAlCarrito from '../components/AgregarAlCarrito';
 import '../inicio.css';
 import './PaginasContenido.css';
 
@@ -10,6 +11,7 @@ function Inicio() {
   const { contenidos } = useContenidos();
   const contenido = contenidos.inicio;
   const productos = priorizarProductosIniciales(inventario).slice(0, 3).map(producto => ({
+    ...producto,
     id: producto.id, name: producto.nombre, price: pesos.format(producto.precio), image: producto.imagen
   }));
   const destino = contenido.boton_url || '/catalogo';
@@ -55,8 +57,8 @@ function Inicio() {
 
               <div className="fila-producto">
                 <strong className="precio">{product.price}</strong>
-                <button className="btn-producto">Añadir a carrito</button>
               </div>
+              <AgregarAlCarrito producto={product} rapido compacto />
 
               <Link to={`/producto/${product.id}`} className="ver-detalles">
                 Ver detalles

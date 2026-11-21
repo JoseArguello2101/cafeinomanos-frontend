@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import '../wireframe.css'
 import './Admin.css'
 import AdminNav from '../components/AdminNav'
 import { listarUsuarios, consultarUsuario, crearUsuario, actualizarUsuario } from '../services/usuarios'
