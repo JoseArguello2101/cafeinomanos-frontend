@@ -85,3 +85,18 @@ body:has(.admin-shell[data-theme='pastel']) { background: #fcf5f0 !important; }
 @media (max-width: 600px) {
   .compra-tarjeta { padding: 16px; }
 }
+
+
+/* enlace para saltar el menú con el teclado; solo aparece al recibir el foco */
+.saltar-contenido {
+  position: absolute;
+  top: -60px;
+  left: 12px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.saltar-contenido:focus { top: 12px; }
+#contenido:focus { outline: none; }
