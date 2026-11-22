@@ -13,6 +13,15 @@
 .catalogo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .catalogo-tarjeta { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
 .catalogo-tarjeta > a img { width: 100%; height: 210px; object-fit: cover; }
+.catalogo-tarjeta-imagen { position: relative; display: block; overflow: hidden; }
+.catalogo-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.catalogo-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .03em; border: 1px solid currentColor; }
+.catalogo-badge--disponible { color: #2e7d32; background: rgba(46, 125, 50, .1); }
+.catalogo-badge--agotado { color: #b3261e; background: rgba(179, 38, 30, .1); }
+.catalogo-sello { position: absolute; inset: auto 0 16px; margin: 0 auto; width: max-content; padding: 6px 18px; background: rgba(20, 20, 20, .78); color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; border-radius: 4px; }
+.catalogo-tarjeta--agotada { border-style: dashed; }
+.catalogo-tarjeta--agotada > a img { filter: grayscale(1); opacity: .6; }
+.catalogo-tarjeta--agotada h2, .catalogo-tarjeta--agotada .catalogo-precio strong { color: var(--muted); }
 .catalogo-tarjeta-cuerpo { display: flex; flex-direction: column; flex: 1; padding: 20px; }
 .catalogo-tarjeta h2 { font-size: 26px; margin: 10px 0 !important; overflow-wrap: anywhere; }
 .catalogo-tarjeta p { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
