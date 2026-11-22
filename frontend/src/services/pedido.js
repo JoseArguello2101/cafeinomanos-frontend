@@ -7,7 +7,7 @@ const CLAVE_ULTIMO_PEDIDO = 'ultimo_pedido'
  * Confirma el carrito en el backend. No envía datos de tarjeta ni realiza cobros:
  * el pedido queda PENDIENTE hasta que se complete el flujo de pago.
  */
-export async function crearPedido(cliente) {
+export async function crearPedido(cliente, operacionId) {
   const resultado = await solicitar('/pedidos/', {
     method: 'POST',
     auth: false,
@@ -19,6 +19,8 @@ export async function crearPedido(cliente) {
       tipo_entrega: 'despacho',
       direccion_entrega: `${cliente.direccion.trim()}, ${cliente.comuna.trim()}`,
       notas: `Medio de pago solicitado: ${cliente.metodo_pago}. Sin datos de tarjeta.`,
+      // mismo identificador en cada reintento para que el backend no cree otra orden
+      operacion_id: operacionId,      
     },
   })
 
