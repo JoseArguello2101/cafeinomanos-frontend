@@ -20,6 +20,8 @@ export function normalizarProducto(producto) {
     stock_reservado: Number(producto?.stock_reservado) || 0,
     estado: producto?.estado || '',
     disponible: producto?.disponible,
+    disponibilidad: producto?.disponibilidad ||
+      (producto?.disponible === false || !(Number(producto?.stock) > 0) ? 'agotado' : 'disponible'),
     formato: producto?.formato || '',
     destacado: Boolean(producto?.destacado),
   }
@@ -29,6 +31,45 @@ export async function listarProductos(signal) {
   const resultado = await solicitar('/productos/', { signal, auth: false })
   if (!Array.isArray(resultado?.data)) throw new Error('La respuesta del backend no tiene el formato esperado.')
   return resultado.data.map(normalizarProducto)
+}
+
+const TAMANO_PAGINA_CATALOGO = 50
+
+function paginaCatalogo(pagina, signal) {
+  return solicitar(`/catalogo/productos/?page=${pagina}&page_size=${TAMANO_PAGINA_CATALOGO}`, { signal, auth: false })
+}
+
+/**
+ * Catálogo público: solo productos activos (el backend excluye los inactivos).
+ * Pide la primera página y luego el resto en paralelo para no encadenar peticiones.
+ */
+export async function listarCatalogo(signal) {
+  const primera = await paginaCatalogo(1, signal)
+  if (!Array.isArray(primera?.data)) throw new Error('La respuesta del catálogo no tiene el formato esperado.')
+  const totalPaginas = Number(primera.total_paginas) || 1
+  const restantes = await Promise.all(
+    Array.from({ length: totalPaginas - 1 }, (_, indice) => paginaCatalogo(indice + 2, signal)),
+  )
+  const vistos = new Set()
+  return [primera, ...restantes]
+    .flatMap(resultado => (Array.isArray(resultado?.data) ? resultado.data : []))
+    .map(normalizarProducto)
+    .filter(producto => producto.estado !== 'inactivo' && !vistos.has(producto.id) && vistos.add(producto.id))
+}
+
+const formateadores = new Map()
+
+/** Formatea un precio con su moneda, por ejemplo "$3.800 CLP". */
+export function formatearPrecio(precio, moneda = 'CLP') {
+  const codigo = String(moneda || 'CLP').toUpperCase()
+  if (!formateadores.has(codigo)) {
+    try {
+      formateadores.set(codigo, new Intl.NumberFormat('es-CL', { style: 'currency', currency: codigo }))
+    } catch {
+      formateadores.set(codigo, new Intl.NumberFormat('es-CL'))
+    }
+  }
+  return `${formateadores.get(codigo).format(Number(precio) || 0)} ${codigo}`
 }
 
 export async function crearProducto(datos) {

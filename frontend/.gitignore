@@ -22,3 +22,14 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variables de entorno (no versionar; solo .env.example)
+.env
+.env.*
+!.env.example
+
+# Skills de agentes (instalación local, no versionar)
+.agents/
+.skills/
+.claude/skills/
+skills-lock.json
