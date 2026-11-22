@@ -10,6 +10,7 @@ import Registro from './pages/Registro'
 import ActivarCuenta from './pages/ActivarCuenta'
 import Pago from './pages/Pago'
 import Confirmacion from './pages/Confirmacion'
+import DemoEstadosOrden from './pages/DemoEstadosOrden'
 import Contacto from './pages/Contacto'
 import QuienesSomos from './pages/QuienesSomos'
 import Admin from './pages/Admin'
@@ -79,6 +80,7 @@ function App() {
           <Route path="/activar/:token" element={<ActivarCuenta />} />
           <Route path="/pago" element={<Pago />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
+          <Route path="/demo/estados-orden" element={<DemoEstadosOrden />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/quienes-somos" element={<QuienesSomos />} />
           <Route path="/admin" element={<RutaAdmin><Admin key={pathname} tema={tema} /></RutaAdmin>} />

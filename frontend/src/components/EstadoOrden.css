@@ -1,0 +1,111 @@
+/*
+ * Estados de la orden. Cada estado se distingue por texto, ícono, estilo de borde
+ * y color; el color nunca es la única señal. Los tokens se ajustan por tema y
+ * mantienen el texto con contraste de al menos 4.5:1 sobre su fondo.
+ */
+.store {
+  --estado-pendiente-texto: #7a4b00; --estado-pendiente-fondo: #fff4d6; --estado-pendiente-borde: #c98f2c;
+  --estado-verificando-texto: #1d4f91; --estado-verificando-fondo: #e6f0fb; --estado-verificando-borde: #5a8bc7;
+  --estado-confirmada-texto: #1e6b34; --estado-confirmada-fondo: #e5f4e8; --estado-confirmada-borde: #4f9a63;
+  --estado-rechazada-texto: #a3221b; --estado-rechazada-fondo: #fde8e6; --estado-rechazada-borde: #cf6b63;
+  --estado-vencida-texto: #5b5550; --estado-vencida-fondo: #efebe7; --estado-vencida-borde: #958c84;
+}
+
+.store[data-theme='oscuro'] {
+  --estado-pendiente-texto: #f5cf7a; --estado-pendiente-fondo: #3d3020; --estado-pendiente-borde: #b88d3f;
+  --estado-verificando-texto: #b3cff2; --estado-verificando-fondo: #24303f; --estado-verificando-borde: #6a8fbe;
+  --estado-confirmada-texto: #a6dcb3; --estado-confirmada-fondo: #233628; --estado-confirmada-borde: #5c9a6c;
+  --estado-rechazada-texto: #f5aca6; --estado-rechazada-fondo: #422422; --estado-rechazada-borde: #b65d56;
+  --estado-vencida-texto: #d6ccc2; --estado-vencida-fondo: #362e28; --estado-vencida-borde: #8b7d72;
+}
+
+.store[data-theme='vintage'] {
+  --estado-pendiente-texto: #6e4308; --estado-pendiente-fondo: #f3e2b9; --estado-pendiente-borde: #b8893a;
+  --estado-verificando-texto: #284a72; --estado-verificando-fondo: #e1e4da; --estado-verificando-borde: #6f89a5;
+  --estado-confirmada-texto: #2d5a29; --estado-confirmada-fondo: #e0e5c6; --estado-confirmada-borde: #758f58;
+  --estado-rechazada-texto: #8a281c; --estado-rechazada-fondo: #f1d4c3; --estado-rechazada-borde: #b56e58;
+  --estado-vencida-texto: #56483a; --estado-vencida-fondo: #e4d7bd; --estado-vencida-borde: #9c8a6d;
+}
+
+.store[data-theme='pastel'] {
+  --estado-pendiente-texto: #774a10; --estado-pendiente-fondo: #fdf0dc; --estado-pendiente-borde: #dfb27a;
+  --estado-verificando-texto: #36527e; --estado-verificando-fondo: #eaf0fa; --estado-verificando-borde: #9db3db;
+  --estado-confirmada-texto: #2b6642; --estado-confirmada-fondo: #e6f4ec; --estado-confirmada-borde: #93c6a5;
+  --estado-rechazada-texto: #982d38; --estado-rechazada-fondo: #fbe6e8; --estado-rechazada-borde: #dc9aa3;
+  --estado-vencida-texto: #5c5156; --estado-vencida-fondo: #f1ebec; --estado-vencida-borde: #b9abaf;
+}
+
+/* Asignación de tokens y estilo de borde propio de cada estado. */
+.estado-orden--pendiente { --e-texto: var(--estado-pendiente-texto); --e-fondo: var(--estado-pendiente-fondo); --e-borde: var(--estado-pendiente-borde); --e-linea: solid; }
+.estado-orden--verificando { --e-texto: var(--estado-verificando-texto); --e-fondo: var(--estado-verificando-fondo); --e-borde: var(--estado-verificando-borde); --e-linea: dashed; }
+.estado-orden--confirmada { --e-texto: var(--estado-confirmada-texto); --e-fondo: var(--estado-confirmada-fondo); --e-borde: var(--estado-confirmada-borde); --e-linea: solid; }
+.estado-orden--rechazada { --e-texto: var(--estado-rechazada-texto); --e-fondo: var(--estado-rechazada-fondo); --e-borde: var(--estado-rechazada-borde); --e-linea: double; }
+.estado-orden--vencida { --e-texto: var(--estado-vencida-texto); --e-fondo: var(--estado-vencida-fondo); --e-borde: var(--estado-vencida-borde); --e-linea: dotted; }
+
+.estado-orden {
+  color: var(--e-texto);
+  background: var(--e-fondo);
+  border: 2px var(--e-linea) var(--e-borde);
+}
+
+.estado-orden-icono { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
+.estado-orden--verificando .estado-orden-icono { animation: estado-orden-giro 1.6s linear infinite; }
+@keyframes estado-orden-giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .estado-orden--verificando .estado-orden-icono { animation: none; }
+}
+
+/* Insignia compacta. */
+.estado-orden--insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+/* Panel con descripción y acciones. */
+.estado-orden--panel {
+  display: grid;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 6px;
+  border-left-width: 6px;
+  border-left-style: solid;
+  margin-bottom: 20px;
+}
+.estado-orden-cabecera { display: flex; align-items: center; gap: 14px; }
+.estado-orden--panel .estado-orden-icono {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  font-size: 20px;
+}
+.store .estado-orden-rotulo { margin: 0 !important; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; opacity: .85; }
+.estado-orden-etiqueta { display: block; font-size: 20px; line-height: 1.25; }
+.store .estado-orden-descripcion { margin: 0 !important; color: inherit; font-size: 14px; }
+
+.estado-orden-acciones { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.store .estado-orden-boton {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.store .estado-orden-boton--primario { background: var(--accent); border-color: var(--accent); color: var(--button); }
+.store .estado-orden-boton:hover:not(:disabled) { background: var(--soft); border-color: var(--e-borde); }
+.store .estado-orden-boton--primario:hover:not(:disabled) { background: var(--accent); filter: brightness(1.12); }
+.store .estado-orden-boton:focus-visible { outline: 3px solid var(--e-borde); outline-offset: 2px; }
+.store .estado-orden-boton:disabled { opacity: .6; cursor: progress; }

@@ -4,6 +4,7 @@ import { pesos } from '../productos'
 import { EVENTO_CARRITO, validarCarrito } from '../services/carrito'
 import { crearPedido } from '../services/pedido'
 import { EVENTO_PRODUCTOS } from '../services/productos'
+import EstadoOrden from '../components/EstadoOrden'
 import './Pago.css'
 
 function mensajeLinea(linea) {
@@ -24,6 +25,7 @@ function Pago() {
   const [errorCarrito, setErrorCarrito] = useState('')
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [errorEnvio, setErrorEnvio] = useState('')
   const [errores, setErrores] = useState({})
   const [formulario, setFormulario] = useState({
     nombre: usuario?.nombre || '',
@@ -83,7 +85,12 @@ function Pago() {
       setErrorGeneral('El carrito tiene cambios o líneas inválidas. Revisa el resumen antes de pagar.')
       return
     }
+    await registrarPedido()
+  }
 
+  // Registra el pedido; si falla, la orden se muestra como rechazada con opción de reintentar.
+  async function registrarPedido() {
+    setErrorEnvio('')
     setEnviando(true)
     try {
       await crearPedido(formulario)
@@ -91,11 +98,17 @@ function Pago() {
       window.dispatchEvent(new Event(EVENTO_PRODUCTOS))
       navigate('/confirmacion')
     } catch (problema) {
-      setErrorGeneral(problema.message || 'No se pudo registrar el pedido. Intenta de nuevo.')
+      setErrorEnvio(problema.message || 'No se pudo registrar el pedido. Intenta de nuevo.')
+      // El panel de estado queda arriba: se lleva la vista hasta él para que el cliente vea qué pasó.
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } finally {
       setEnviando(false)
     }
   }
+
+  let estadoOrden = 'pendiente'
+  if (enviando) estadoOrden = 'verificando'
+  else if (errorEnvio) estadoOrden = 'rechazada'
 
   if (cargando) return <section className="compra"><h1>Finalizar compra</h1><p role="status">Validando carrito…</p></section>
 
@@ -119,8 +132,21 @@ function Pago() {
 
   return (
     <section className="compra" aria-labelledby="pago-titulo">
-      <h1 id="pago-titulo">Finalizar compra</h1>
-      <p className="compra-aviso" role="status">
+      <div className="compra-titulo-estado">
+        <h1 id="pago-titulo">Finalizar compra</h1>
+        <EstadoOrden estado={estadoOrden} variante="insignia" />
+      </div>
+      {errorEnvio && (
+        <EstadoOrden
+          estado="rechazada"
+          titulo="No pudimos registrar tu orden"
+          descripcion={`${errorEnvio} No se realizó ningún cobro.`}
+          acciones={['reintentar', 'carrito']}
+          alAccionar={registrarPedido}
+          ocupado={enviando}
+        />
+      )}
+      <p className="compra-aviso">
         El detalle, precios y total provienen de la validación del backend. Solo puedes continuar si el carrito es válido.
       </p>
 
