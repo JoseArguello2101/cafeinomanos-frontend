@@ -1,0 +1,42 @@
+/* Sección de pago dentro de Confirmación. Usa los colores del tema activo. */
+.seccion-pago { margin-bottom: 20px; }
+.seccion-pago h2 { margin-top: 0 !important; }
+
+/* Resumen: total y medio de pago en dos columnas. */
+.seccion-pago-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0 !important; }
+.seccion-pago-datos dt { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.seccion-pago-datos dd { margin: 2px 0 0; }
+.seccion-pago-monto { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.store .seccion-pago-aviso { font-size: 13px; color: var(--muted); margin: 0 0 16px !important; }
+
+/* Botón principal de pago. */
+.store .seccion-pago-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--button);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.store .seccion-pago-boton:hover:not(:disabled) { filter: brightness(1.12); }
+.store .seccion-pago-boton:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.store .seccion-pago-boton:disabled { opacity: .75; cursor: progress; }
+
+/* Indicador de carga girando mientras se crea el intento de pago. */
+.seccion-pago-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: seccion-pago-giro .8s linear infinite;
+}
+@keyframes seccion-pago-giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .seccion-pago-spinner { animation-duration: 2.4s; }
+}

@@ -20,6 +20,7 @@ export const ACCIONES = {
   seguir: { etiqueta: 'Seguir comprando', destino: '/catalogo' },
   carrito: { etiqueta: 'Volver al carrito', destino: '/carrito' },
   contacto: { etiqueta: 'Contactar a la cafetería', destino: '/contacto' },
+  pedido: { etiqueta: 'Ver mi pedido', destino: '/confirmacion' },
 }
 
 export const ESTADOS_ORDEN = {

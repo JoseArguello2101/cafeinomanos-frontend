@@ -11,6 +11,8 @@ import ActivarCuenta from './pages/ActivarCuenta'
 import Pago from './pages/Pago'
 import Confirmacion from './pages/Confirmacion'
 import DemoEstadosOrden from './pages/DemoEstadosOrden'
+import PasarelaSandbox from './pages/PasarelaSandbox'
+import PagoRetorno from './pages/PagoRetorno'
 import Contacto from './pages/Contacto'
 import QuienesSomos from './pages/QuienesSomos'
 import Admin from './pages/Admin'
@@ -80,6 +82,9 @@ function App() {
           <Route path="/activar/:token" element={<ActivarCuenta />} />
           <Route path="/pago" element={<Pago />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
+          {/* Pasarela de pago simulada (sandbox) y vista a la que vuelve el cliente desde la pasarela. */}
+          <Route path="/pago/pasarela-sandbox" element={<PasarelaSandbox />} />
+          <Route path="/pago/retorno" element={<PagoRetorno />} />
           {/* Vista de demostración con los 5 estados de la orden, para revisarlos en los 4 temas. */}
           <Route path="/demo/estados-orden" element={<DemoEstadosOrden />} />
           <Route path="/contacto" element={<Contacto />} />

@@ -4,6 +4,7 @@ import { pesos } from '../productos'
 import { borrarUltimoPedido, leerUltimoPedido, obtenerPedido } from '../services/pedido'
 import { estadoDeOrden } from '../estadosOrden'
 import EstadoOrden from '../components/EstadoOrden'
+import SeccionPago from '../components/SeccionPago'
 import './Confirmacion.css'
 
 // Cada cuántos segundos se vuelve a consultar el pedido mientras el pago se está verificando.
@@ -108,6 +109,9 @@ function Confirmacion() {
           No pudimos actualizar el estado ({errorConsulta}). Se muestra el último estado conocido.
         </p>
       )}
+
+      {/* Sección de pago: solo mientras la orden aún se puede pagar (no confirmada ni vencida). */}
+      {['pendiente', 'verificando', 'rechazada'].includes(estado) && <SeccionPago pedido={pedido} estado={estado} />}
 
       <div className="compra-tarjeta">
         <p className="eyebrow">Número de pedido</p>
