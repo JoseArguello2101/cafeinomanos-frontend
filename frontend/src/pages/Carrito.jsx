@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { pesos, imagenPorProducto } from '../productos'
-import { actualizarCantidad, eliminarDelCarrito, EVENTO_CARRITO, obtenerCarrito } from '../services/carrito'
+import {
+  actualizarCantidad,
+  eliminarDelCarrito,
+  EVENTO_CARRITO,
+  guardarRutaRetorno,
+  obtenerCarrito,
+} from '../services/carrito'
 import { EVENTO_PRODUCTOS } from '../services/productos'
 import './Carrito.css'
 
 function Carrito() {
+  const location = useLocation()
+  const mensajeRetorno = location.state?.mensajeCarrito || ''
+  const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
+  const autenticado = Boolean(localStorage.getItem('token') && usuario)
   const [carrito, setCarrito] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -98,6 +108,8 @@ function Carrito() {
   }
 
   const items = carrito?.items || []
+  const inconsistencias = carrito?.inconsistencias || []
+  const requiereRevision = Boolean(carrito?.requiere_revision || inconsistencias.length > 0)
 
   return (
     <section className="compra" aria-labelledby="carrito-titulo">
@@ -105,6 +117,29 @@ function Carrito() {
       <p className="compra-aviso">
         Los productos se obtienen del carrito guardado en el backend. Al confirmar, el pedido se registra en el servidor; el pago se confirma después sin cobros en línea.
       </p>
+
+      {mensajeRetorno && !requiereRevision && (
+        <p className="compra-aviso-exito" role="status">{mensajeRetorno}</p>
+      )}
+
+      {items.length > 0 && !autenticado && (
+        <div className="compra-auth-banner" role="region" aria-label="Acceso de cliente">
+          <p>¿Ya tienes cuenta? Inicia sesión o regístrate para conservar tu carrito y volver aquí automáticamente.</p>
+          <div className="compra-auth-acciones">
+            <Link to="/login" state={{ desde: '/carrito' }} onClick={() => guardarRutaRetorno('/carrito')}>
+              Iniciar sesión
+            </Link>
+            <Link
+              to="/registro"
+              state={{ desde: '/carrito' }}
+              className="compra-secundario"
+              onClick={() => guardarRutaRetorno('/carrito')}
+            >
+              Crear cuenta
+            </Link>
+          </div>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="compra-vacio">
@@ -114,6 +149,16 @@ function Carrito() {
         </div>
       ) : (
         <div className="compra-tarjeta">
+          {requiereRevision && (
+            <div className="compra-revision" role="alert">
+              <strong>Revisa tu carrito antes de continuar al pago:</strong>
+              <ul>
+                {inconsistencias.map(inc => (
+                  <li key={`${inc.producto_id}-${inc.motivo}`}>{inc.mensaje}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {errorAccion && <p className="compra-error" role="alert">{errorAccion}</p>}
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {items.map(item => (
@@ -178,7 +223,13 @@ function Carrito() {
           </p>
 
           <div className="compra-acciones">
-            <Link to="/pago">Continuar al pago</Link>
+            {requiereRevision ? (
+              <button type="button" className="compra-bloqueado" disabled>
+                Corrige tu carrito para pagar
+              </button>
+            ) : (
+              <Link to="/pago">Continuar al pago</Link>
+            )}
             <Link to="/catalogo" className="compra-secundario">Seguir comprando</Link>
           </div>
         </div>

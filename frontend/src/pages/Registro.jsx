@@ -1,11 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { solicitar } from '../api'
+import { guardarRutaRetorno, obtenerRutaRetorno } from '../services/carrito'
 
 function Registro() {
   const location = useLocation()
-  // si venía del carrito, después de registrarse vuelve ahí
-  const desde = location.state?.desde || '/'
+  const volverParam = new URLSearchParams(location.search).get('volver')
+  // Si venía del carrito o del pago, conserva el retorno para cuando inicie sesión.
+  const desde = obtenerRutaRetorno(location.state?.desde || volverParam)
+
+  useEffect(() => {
+    if (desde !== '/') guardarRutaRetorno(desde)
+  }, [desde])
 
   const [datos, setDatos] = useState({
     nombre: '',
@@ -71,6 +77,7 @@ function Registro() {
             <div className="alert alert-success">
               Te enviamos un enlace de activación a <strong>{datos.email.trim()}</strong>.
               El enlace vence en 24 horas y solo puede usarse una vez.
+              {desde === '/carrito' && ' Cuando inicies sesión volverás automáticamente a tu carrito.'}
             </div>
             <p className="mb-0">
               ¿Ya tienes cuenta? <Link to="/login" state={{ desde }}>Inicia sesión</Link>

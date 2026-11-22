@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { solicitar } from '../api'
-import { EVENTO_CARRITO } from '../services/carrito'
+import {
+  combinarCarrito,
+  EVENTO_CARRITO,
+  guardarRutaRetorno,
+  limpiarRutaRetorno,
+  obtenerRutaRetorno,
+} from '../services/carrito'
 
 function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  // si venia del carrito o del pago, despues de entrar vuelve ahi
-  const desde = location.state?.desde || '/'
+  const volverParam = new URLSearchParams(location.search).get('volver')
+  // Si venía del carrito o del pago, después de entrar vuelve ahí (nunca a /admin).
+  const desde = obtenerRutaRetorno(location.state?.desde || volverParam)
+
+  useEffect(() => {
+    if (desde !== '/') guardarRutaRetorno(desde)
+  }, [desde])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -61,12 +72,23 @@ function Login() {
 
       localStorage.setItem('token', resultado.token)
       localStorage.setItem('usuario', JSON.stringify(resultado.usuario))
-      window.dispatchEvent(new Event(EVENTO_CARRITO))
-      // el admin va a su panel; el cliente vuelve a donde venía, pero nunca al panel
+
+      // El admin va a su panel; el cliente combina su carrito y vuelve a una ruta segura.
       if (resultado.usuario.es_admin) {
+        limpiarRutaRetorno()
+        window.dispatchEvent(new Event(EVENTO_CARRITO))
         navigate('/admin')
       } else {
-        navigate(desde.startsWith('/admin') ? '/' : desde)
+        const combinado = await combinarCarrito().catch(() => null)
+        window.dispatchEvent(new Event(EVENTO_CARRITO))
+        const destinoSeguro = obtenerRutaRetorno(desde)
+        limpiarRutaRetorno()
+        const destinoFinal = destinoSeguro === '/pago' ? '/carrito' : destinoSeguro
+        navigate(destinoFinal, {
+          state: destinoFinal === '/carrito' && combinado?.message
+            ? { mensajeCarrito: combinado.message }
+            : undefined,
+        })
       }
     } catch (error) {
       setErrorServidor(error.message || 'No se pudo iniciar sesión. Intenta de nuevo.')

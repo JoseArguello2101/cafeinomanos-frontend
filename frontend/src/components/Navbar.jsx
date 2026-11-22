@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
-import { obtenerCarrito, EVENTO_CARRITO } from '../services/carrito'
+import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
 import './Navbar.css'
 
 const TEMAS = [
@@ -13,6 +13,8 @@ const TEMAS = [
 
 function Navbar({ tema, onTemaChange }) {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  const retornoCompra = pathname === '/carrito' || pathname === '/pago' ? '/carrito' : undefined
   const usuario = JSON.parse(localStorage.getItem('usuario'))
   const [unidadesCarrito, setUnidadesCarrito] = useState(0)
   const [temasAbierto, setTemasAbierto] = useState(false)
@@ -115,8 +117,22 @@ function Navbar({ tema, onTemaChange }) {
           </div>
         ) : (
           <div className="nav-auth">
-            <Link to="/login" className="btn-nav btn-nav-secundario">Iniciar sesión</Link>
-            <Link to="/registro" className="btn-nav btn-nav-primario">Registrar</Link>
+            <Link
+              to="/login"
+              state={retornoCompra ? { desde: retornoCompra } : undefined}
+              onClick={() => retornoCompra && guardarRutaRetorno(retornoCompra)}
+              className="btn-nav btn-nav-secundario"
+            >
+              Iniciar sesión
+            </Link>
+            <Link
+              to="/registro"
+              state={retornoCompra ? { desde: retornoCompra } : undefined}
+              onClick={() => retornoCompra && guardarRutaRetorno(retornoCompra)}
+              className="btn-nav btn-nav-primario"
+            >
+              Registrar
+            </Link>
           </div>
         )}
 
