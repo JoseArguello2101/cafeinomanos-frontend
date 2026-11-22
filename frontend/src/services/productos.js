@@ -1,5 +1,5 @@
 import { solicitar } from '../api'
-import { imagenPorProducto } from '../productos'
+import { categoriaCanonica, imagenPorProducto } from '../productos'
 
 /** Avisa a la aplicación que el inventario cambió tras un pedido. */
 export const EVENTO_PRODUCTOS = 'productos:actualizados'
@@ -22,7 +22,7 @@ export function normalizarProducto(producto) {
     id: String(producto?.id ?? producto?.identificador ?? ''),
     nombre: producto?.nombre || '',
     descripcion: producto?.descripcion || '',
-    categoria: producto?.categoria || '',
+    categoria: categoriaCanonica(producto?.categoria),
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
     imagen: principal || imagenPorProducto(producto),

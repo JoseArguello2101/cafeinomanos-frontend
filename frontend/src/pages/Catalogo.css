@@ -5,10 +5,10 @@
 .catalogo-demo { font-size: 12px; margin: 18px 0 !important; }
 .catalogo-filtros { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; padding: 20px; background: var(--soft); border: 1px solid var(--line); }
 .catalogo-filtros > div { display: grid; gap: 6px; flex: 1; min-width: 180px; }
-.catalogo-filtros label { font-size: 12px; }
+.catalogo-filtros > div label { font-size: 12px; }
 .catalogo-filtros input, .catalogo-filtros select { width: 100%; }
-.catalogo-disponibles { display: flex; align-items: center; gap: 8px; align-self: center; }
-.catalogo-disponibles input { width: 18px; height: 18px; accent-color: var(--accent); }
+.catalogo-disponibles { display: inline-flex; align-items: center; gap: 10px; align-self: end; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; font: inherit; white-space: nowrap; cursor: pointer; }
+.catalogo-disponibles input { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
 .catalogo-conteo { margin: 18px 0 !important; font-size: 12px; }
 .catalogo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .catalogo-tarjeta { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
@@ -58,4 +58,4 @@
 .paginacion-btn.activo { background: var(--accent); color: var(--button); border-color: var(--accent); }
 .paginacion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 @media (max-width: 900px) { .catalogo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 600px) { .catalogo-grid, .catalogo-detalle { grid-template-columns: 1fr; } .catalogo-filtros { flex-direction: column; align-items: stretch; padding: 16px; } .catalogo-filtros > div { min-width: 0; } .catalogo-detalle { padding: 16px; gap: 20px; } .galeria-principal { height: 280px; } .galeria-miniaturas button { width: 56px; height: 56px; } .catalogo-disponibles { align-self: start; } }
+@media (max-width: 600px) { .catalogo-grid, .catalogo-detalle { grid-template-columns: 1fr; } .catalogo-filtros { flex-direction: column; align-items: stretch; padding: 16px; } .catalogo-filtros > div { min-width: 0; } .catalogo-detalle { padding: 16px; gap: 20px; } .galeria-principal { height: 280px; } .galeria-miniaturas button { width: 56px; height: 56px; } .catalogo-disponibles { align-self: stretch; } }

@@ -4,6 +4,19 @@ import mocha from './assets/mocha.jpg'
 import macchiato from './assets/macchiato.jpg'
 
 export const categorias = ['Café', 'Repostería', 'Accesorios']
+
+function normalizarTexto(texto) {
+  return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+}
+
+/** Unifica variantes del backend (p. ej. "Cafe" o "CAFÉ") con la categoría canónica "Café". */
+export function categoriaCanonica(valor) {
+  const texto = String(valor ?? '').trim()
+  if (!texto) return ''
+  const clave = normalizarTexto(texto)
+  return categorias.find(opcion => normalizarTexto(opcion) === clave) || texto
+}
+
 export const productosIniciales = [
   { id: '1', nombre: 'Capuccino', descripcion: 'Espresso con leche y una suave capa de espuma.', categoria: 'Café', precio: 3800, stock: 20, imagen: capuccino, imagenes: [capuccino, macchiato, mocha] },
   { id: '2', nombre: 'Mocha', descripcion: 'Café con chocolate y leche.', categoria: 'Café', precio: 4200, stock: 0, imagen: mocha, imagenes: [mocha, capuccino] },
