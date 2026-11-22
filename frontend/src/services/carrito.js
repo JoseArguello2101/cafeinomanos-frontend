@@ -2,6 +2,7 @@ import { solicitar } from '../api'
 import { imagenPorProducto } from '../productos'
 
 const CLAVE_SESION = 'cart_session_id'
+const CLAVE_RETORNO = 'retorno_post_login'
 
 /** Evento global para avisar a la navbar que el carrito cambió. */
 export const EVENTO_CARRITO = 'carrito:actualizado'
@@ -15,6 +16,46 @@ export function obtenerSesionCarrito() {
   return localStorage.getItem(CLAVE_SESION) || undefined
 }
 
+/**
+ * Valida que una ruta de retorno tras el login sea interna y nunca apunte a
+ * páginas de administración ni de autenticación.
+ */
+export function rutaRetornoSegura(ruta) {
+  if (typeof ruta !== 'string') return ''
+  const limpia = ruta.trim()
+  if (!limpia.startsWith('/') || limpia.startsWith('//')) return ''
+  const path = limpia.split('?')[0].split('#')[0].toLowerCase()
+  if (
+    path === '/admin' ||
+    path.startsWith('/admin/') ||
+    path === '/demo/admin' ||
+    path.startsWith('/demo/admin/') ||
+    path === '/login' ||
+    path === '/registro' ||
+    path === '/activar' ||
+    path.startsWith('/activar/')
+  ) {
+    return ''
+  }
+  return limpia
+}
+
+export function guardarRutaRetorno(ruta) {
+  const segura = rutaRetornoSegura(ruta)
+  if (segura && segura !== '/') sessionStorage.setItem(CLAVE_RETORNO, segura)
+}
+
+export function obtenerRutaRetorno(candidata) {
+  const directa = rutaRetornoSegura(candidata)
+  if (directa) return directa
+  const guardada = rutaRetornoSegura(sessionStorage.getItem(CLAVE_RETORNO))
+  return guardada || '/'
+}
+
+export function limpiarRutaRetorno() {
+  sessionStorage.removeItem(CLAVE_RETORNO)
+}
+
 function normalizarItem(item) {
   const nombre = item?.nombre || 'Producto'
   return {
@@ -25,7 +66,34 @@ function normalizarItem(item) {
     precio_unitario: Number(item?.precio_unitario) || 0,
     subtotal: Number(item?.subtotal) || 0,
     stock: Number(item?.stock) || 0,
+    disponible: item?.disponible !== false,
     imagen_url: item?.imagen_url || imagenPorProducto({ nombre }),
+  }
+}
+
+function formatearRespuestaCarrito(resultado) {
+  const carrito = resultado?.carrito
+  if (!carrito || !Array.isArray(carrito.items)) {
+    throw new Error('El backend no devolvió un carrito válido.')
+  }
+  const items = carrito.items.map(normalizarItem)
+  const inconsistencias = Array.isArray(carrito.inconsistencias)
+    ? carrito.inconsistencias
+    : (Array.isArray(resultado?.inconsistencias) ? resultado.inconsistencias : [])
+  const requiereRevision = Boolean(carrito.requiere_revision ?? resultado?.requiere_revision ?? inconsistencias.length > 0)
+  const puedePagar = carrito.puede_pagar !== undefined
+    ? Boolean(carrito.puede_pagar)
+    : (items.length > 0 && !requiereRevision)
+
+  return {
+    session_id: resultado.session_id,
+    items,
+    total_unidades: Number(carrito.total_unidades) || 0,
+    total: Number(carrito.total) || 0,
+    actualizado_en: carrito.actualizado_en,
+    inconsistencias,
+    requiere_revision: requiereRevision,
+    puede_pagar: puedePagar,
   }
 }
 
@@ -79,16 +147,22 @@ export async function obtenerCarrito(signal) {
   const consulta = sessionId ? `?session_id=${encodeURIComponent(sessionId)}` : ''
   const resultado = await solicitar(`/carrito/${consulta}`, { signal, auth: false, conToken: true })
   recordarSesion(resultado?.session_id)
+  return formatearRespuestaCarrito(resultado)
+}
 
-  const carrito = resultado?.carrito
-  if (!carrito || !Array.isArray(carrito.items)) {
-    throw new Error('El backend no devolvió un carrito válido.')
-  }
+/** Combina el carrito anónimo (si existe) con el carrito del cliente autenticado tras el login. */
+export async function combinarCarrito() {
+  const sessionId = obtenerSesionCarrito()
+  const resultado = await solicitar('/carrito/combinar/', {
+    method: 'POST',
+    auth: true,
+    datos: sessionId ? { session_id: sessionId } : {},
+  })
+  recordarSesion(resultado?.session_id)
   return {
-    session_id: resultado.session_id,
-    items: carrito.items.map(normalizarItem),
-    total_unidades: Number(carrito.total_unidades) || 0,
-    total: Number(carrito.total) || 0,
-    actualizado_en: carrito.actualizado_en,
+    ...formatearRespuestaCarrito(resultado),
+    combinado: Boolean(resultado?.combinado),
+    productos_combinados: Number(resultado?.productos_combinados) || 0,
+    message: resultado?.message || '',
   }
 }
