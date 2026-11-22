@@ -69,6 +69,7 @@ export async function solicitar(ruta, {
     error.status = respuesta.status
     error.erroresPorCampo = resultado?.errores || {}
     error.motivo = resultado?.motivo || ''
+    error.data = resultado
     throw error
   }
   return resultado

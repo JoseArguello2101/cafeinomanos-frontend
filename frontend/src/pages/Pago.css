@@ -11,7 +11,13 @@
   font-size: 14px;
 }
 .compra-formulario .campo-doble { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compra-formulario input.input-error,
+.compra-formulario select.input-error { border-color: #b00020; }
 .compra-error { color: #b00020; font-size: 13px; margin: 0 !important; }
+.compra-alerta { border-color: #d8a0a7; background: #fff8f8; margin-bottom: 16px; }
+.compra-alerta h2 { font-size: 16px; margin-bottom: 10px; }
+.compra-lista-alerta { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14px; }
+.compra-lista-alerta strong { font-weight: 600; }
 @media (max-width: 600px) {
   .compra-formulario .campo-doble { grid-template-columns: 1fr; }
 }

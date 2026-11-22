@@ -150,6 +150,61 @@ export async function obtenerCarrito(signal) {
   return formatearRespuestaCarrito(resultado)
 }
 
+/** Valida el carrito en backend antes de pagar. Requiere sesión de cliente activo. */
+export async function validarCarrito(itemsEnviados = [], signal) {
+  const sessionId = obtenerSesionCarrito()
+  try {
+    const resultado = await solicitar('/carrito/validar/', {
+      method: 'POST',
+      signal,
+      datos: {
+        session_id: sessionId,
+        ...(itemsEnviados.length ? { items: itemsEnviados } : {}),
+      },
+    })
+    recordarSesion(resultado?.carrito?.session_id || resultado?.session_id)
+    return normalizarValidacion(resultado)
+  } catch (error) {
+    if (error.data?.carrito) {
+      recordarSesion(error.data.carrito.session_id || error.data.session_id)
+      return normalizarValidacion(error.data)
+    }
+    throw error
+  }
+}
+
+function normalizarValidacion(resultado) {
+  const carrito = resultado?.carrito || {}
+  return {
+    aprobado: Boolean(resultado?.aprobado),
+    message: resultado?.message || '',
+    errores: Array.isArray(resultado?.errores) ? resultado.errores : [],
+    lineas_invalidas: Array.isArray(resultado?.lineas_invalidas) ? resultado.lineas_invalidas : [],
+    cambios_precio: Array.isArray(resultado?.cambios_precio) ? resultado.cambios_precio : [],
+    carrito: {
+      session_id: carrito.session_id,
+      items: Array.isArray(carrito.items) ? carrito.items.map(normalizarItemValidado) : [],
+      total_unidades: Number(carrito.total_unidades) || 0,
+      total: Number(carrito.total) || 0,
+    },
+  }
+}
+
+function normalizarItemValidado(item) {
+  const nombre = item?.nombre || 'Producto'
+  return {
+    id: item?.item_id ?? item?.id,
+    producto_id: item?.producto_id,
+    nombre,
+    cantidad: Number(item?.cantidad) || 0,
+    precio_unitario: Number(item?.precio_unitario) || 0,
+    subtotal: Number(item?.subtotal) || 0,
+    stock: Number(item?.stock_disponible ?? item?.stock) || 0,
+    disponible: item?.disponible !== false,
+    imagen_url: item?.imagen_url || imagenPorProducto({ nombre }),
+  }
+}
+
 /** Combina el carrito anónimo (si existe) con el carrito del cliente autenticado tras el login. */
 export async function combinarCarrito() {
   const sessionId = obtenerSesionCarrito()
