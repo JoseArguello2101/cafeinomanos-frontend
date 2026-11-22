@@ -80,6 +80,7 @@ function App() {
           <Route path="/activar/:token" element={<ActivarCuenta />} />
           <Route path="/pago" element={<Pago />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
+          {/* Vista de demostración con los 5 estados de la orden, para revisarlos en los 4 temas. */}
           <Route path="/demo/estados-orden" element={<DemoEstadosOrden />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/quienes-somos" element={<QuienesSomos />} />

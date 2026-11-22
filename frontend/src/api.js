@@ -68,6 +68,7 @@ export async function solicitar(ruta, {
     const error = new Error(mensajeDeError(resultado, respuesta))
     error.status = respuesta.status
     error.erroresPorCampo = resultado?.errores || {}
+    // Motivo del rechazo que envían algunos endpoints (ej. activación: invalido, expirado o usado).
     error.motivo = resultado?.motivo || ''
     error.data = resultado
     throw error

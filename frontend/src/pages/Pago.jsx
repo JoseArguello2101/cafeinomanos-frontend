@@ -25,6 +25,7 @@ function Pago() {
   const [errorCarrito, setErrorCarrito] = useState('')
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // Mensaje de error al registrar el pedido; si tiene valor, la orden se muestra como rechazada.
   const [errorEnvio, setErrorEnvio] = useState('')
   const [errores, setErrores] = useState({})
   const [formulario, setFormulario] = useState({
@@ -106,6 +107,7 @@ function Pago() {
     }
   }
 
+  // Estado que muestra la insignia del título: pendiente al entrar, verificando mientras se envía y rechazada si falló.
   let estadoOrden = 'pendiente'
   if (enviando) estadoOrden = 'verificando'
   else if (errorEnvio) estadoOrden = 'rechazada'
@@ -132,6 +134,7 @@ function Pago() {
 
   return (
     <section className="compra" aria-labelledby="pago-titulo">
+      {/* Título con la insignia del estado de la orden y, si falló el registro, el panel "Rechazada" con Reintentar y Volver al carrito. */}
       <div className="compra-titulo-estado">
         <h1 id="pago-titulo">Finalizar compra</h1>
         <EstadoOrden estado={estadoOrden} variante="insignia" />

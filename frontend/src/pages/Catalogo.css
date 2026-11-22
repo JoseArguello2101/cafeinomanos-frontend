@@ -13,12 +13,17 @@
 .catalogo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .catalogo-tarjeta { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); min-width: 0; }
 .catalogo-tarjeta > a img { width: 100%; height: 210px; object-fit: cover; }
+/* Contenedor de la imagen: permite ubicar el sello "Agotado" encima. */
 .catalogo-tarjeta-imagen { position: relative; display: block; overflow: hidden; }
+/* Fila con la categoría y la etiqueta de disponibilidad. */
 .catalogo-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+/* Etiqueta de disponibilidad: verde "Disponible" o roja "Agotado". */
 .catalogo-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .03em; border: 1px solid currentColor; }
 .catalogo-badge--disponible { color: #2e7d32; background: rgba(46, 125, 50, .1); }
 .catalogo-badge--agotado { color: #b3261e; background: rgba(179, 38, 30, .1); }
+/* Sello oscuro "Agotado" que se superpone a la imagen. */
 .catalogo-sello { position: absolute; inset: auto 0 16px; margin: 0 auto; width: max-content; padding: 6px 18px; background: rgba(20, 20, 20, .78); color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; border-radius: 4px; }
+/* Tarjeta agotada: borde discontinuo, imagen en gris y textos atenuados. */
 .catalogo-tarjeta--agotada { border-style: dashed; }
 .catalogo-tarjeta--agotada > a img { filter: grayscale(1); opacity: .6; }
 .catalogo-tarjeta--agotada h2, .catalogo-tarjeta--agotada .catalogo-precio strong { color: var(--muted); }

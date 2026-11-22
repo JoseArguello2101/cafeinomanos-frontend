@@ -32,6 +32,7 @@ export function normalizarProducto(producto) {
     estado: producto?.estado || '',
     activo: producto?.activo ?? producto?.is_active,
     disponible: producto?.disponible,
+    // "disponible" o "agotado": se usa la que envía el backend; si no viene, se deduce del stock.
     disponibilidad: producto?.disponibilidad ||
       (producto?.disponible === false || !(Number(producto?.stock) > 0) ? 'agotado' : 'disponible'),
     formato: producto?.formato || '',
@@ -45,8 +46,10 @@ export async function listarProductos(signal) {
   return resultado.data.map(normalizarProducto)
 }
 
+// Máximo de productos que el backend entrega por página del catálogo.
 const TAMANO_PAGINA_CATALOGO = 50
 
+// Pide una página del endpoint público del catálogo (no requiere sesión).
 function paginaCatalogo(pagina, signal) {
   return solicitar(`/catalogo/productos/?page=${pagina}&page_size=${TAMANO_PAGINA_CATALOGO}`, { signal, auth: false })
 }
@@ -58,10 +61,12 @@ function paginaCatalogo(pagina, signal) {
 export async function listarCatalogo(signal) {
   const primera = await paginaCatalogo(1, signal)
   if (!Array.isArray(primera?.data)) throw new Error('La respuesta del catálogo no tiene el formato esperado.')
+  // Con el total de páginas de la primera respuesta, pide las demás al mismo tiempo.
   const totalPaginas = Number(primera.total_paginas) || 1
   const restantes = await Promise.all(
     Array.from({ length: totalPaginas - 1 }, (_, indice) => paginaCatalogo(indice + 2, signal)),
   )
+  // Une todas las páginas, normaliza cada producto y descarta inactivos o repetidos por seguridad.
   const vistos = new Set()
   return [primera, ...restantes]
     .flatMap(resultado => (Array.isArray(resultado?.data) ? resultado.data : []))
@@ -69,11 +74,13 @@ export async function listarCatalogo(signal) {
     .filter(producto => producto.estado !== 'inactivo' && !vistos.has(producto.id) && vistos.add(producto.id))
 }
 
+// Guarda un formateador por moneda para no crearlo de nuevo en cada tarjeta.
 const formateadores = new Map()
 
 /** Formatea un precio con su moneda, por ejemplo "$3.800 CLP". */
 export function formatearPrecio(precio, moneda = 'CLP') {
   const codigo = String(moneda || 'CLP').toUpperCase()
+  // Si el código de moneda no es válido, se formatea solo el número.
   if (!formateadores.has(codigo)) {
     try {
       formateadores.set(codigo, new Intl.NumberFormat('es-CL', { style: 'currency', currency: codigo }))

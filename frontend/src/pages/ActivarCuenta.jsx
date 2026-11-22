@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { confirmarActivacion, validarActivacion } from '../services/activacion'
 
+// Largo mínimo de la contraseña (coincide con la validación de Django en el backend).
 const LARGO_MINIMO = 8
 
 // Pantallas que se muestran cuando el enlace no se puede usar.
+// La clave coincide con el "motivo" que devuelve el backend: invalido, expirado o usado.
 const AVISOS = {
   invalido: {
     titulo: 'Enlace no válido',
@@ -34,6 +36,7 @@ function requisitosContrasena(password) {
   ]
 }
 
+// Contenedor centrado con título, usado por todas las pantallas de la página.
 function Tarjeta({ titulo, children }) {
   return (
     <div className="container py-5">
@@ -47,19 +50,28 @@ function Tarjeta({ titulo, children }) {
   )
 }
 
+/**
+ * Página de activación de cuentas pendientes.
+ * Se abre desde el enlace del correo (/activar/:token), valida el enlace,
+ * permite definir la contraseña y muestra el resultado.
+ */
 function ActivarCuenta() {
+  // Token que viene en el enlace de activación.
   const { token } = useParams()
   // cargando | valido | invalido | expirado | usado | activado | error
   const [estado, setEstado] = useState('cargando')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmar, setConfirmar] = useState('')
+  // true muestra las contraseñas en texto visible (botón Mostrar/Ocultar).
   const [mostrar, setMostrar] = useState(false)
   const [errores, setErrores] = useState({})
   const [errorServidor, setErrorServidor] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // Al incrementarse vuelve a validar el enlace (botón Reintentar cuando falla la conexión).
   const [intento, setIntento] = useState(0)
 
+  // Al abrir la página, pregunta al backend si el enlace sigue vigente y, si no, por qué motivo.
   useEffect(() => {
     const controlador = new AbortController()
     validarActivacion(token, controlador.signal)
@@ -79,6 +91,7 @@ function ActivarCuenta() {
     return () => controlador.abort()
   }, [token, intento])
 
+  // Valida en el navegador que la contraseña cumpla los requisitos y que ambas coincidan.
   function validar() {
     const nuevos = {}
     if (requisitosContrasena(password).some(requisito => !requisito.cumple)) {
@@ -89,6 +102,8 @@ function ActivarCuenta() {
     return nuevos
   }
 
+  // Envía la contraseña al backend para activar la cuenta.
+  // Si el backend rechaza el enlace, cambia a la pantalla del motivo; si rechaza la contraseña, la muestra bajo el campo.
   async function enviar(evento) {
     evento.preventDefault()
     setErrorServidor('')
@@ -116,6 +131,7 @@ function ActivarCuenta() {
     }
   }
 
+  // A partir de aquí se elige qué pantalla mostrar según el estado.
   if (estado === 'cargando') {
     return (
       <div className="container py-5 text-center" role="status" aria-live="polite">
