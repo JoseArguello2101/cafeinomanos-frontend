@@ -28,6 +28,8 @@ function Pago() {
   // Mensaje de error al registrar el pedido; si tiene valor, la orden se muestra como rechazada.
   const [errorEnvio, setErrorEnvio] = useState('')
   const [errores, setErrores] = useState({})
+  // identificador de esta compra; se mantiene si el cliente reintenta tras un error
+  const [operacionId] = useState(() => crypto.randomUUID())
   const [formulario, setFormulario] = useState({
     nombre: usuario?.nombre || '',
     correo: usuario?.email || '',
@@ -94,7 +96,7 @@ function Pago() {
     setErrorEnvio('')
     setEnviando(true)
     try {
-      await crearPedido(formulario)
+      await crearPedido(formulario, operacionId)
       window.dispatchEvent(new Event(EVENTO_CARRITO))
       window.dispatchEvent(new Event(EVENTO_PRODUCTOS))
       navigate('/confirmacion')
