@@ -72,6 +72,8 @@ export function estadoDeOrden(pedido, ahora = new Date()) {
   const estadoPedido = String(pedido?.estado || '').toUpperCase()
   const estadoPago = String(pedido?.pago?.estado || '').toUpperCase()
 
+  // pago aprobado pero el backend aún no consolida el inventario
+  if (estadoPedido === 'CONFIRMACION_PENDIENTE') return 'verificando'
   if (ESTADOS_PEDIDO_CONFIRMADO.includes(estadoPedido) || estadoPago === 'AUTORIZADO') return 'confirmada'
   if (estadoPago === 'RECHAZADO') return 'rechazada'
   if (estadoPedido === 'CANCELADO') return 'vencida'

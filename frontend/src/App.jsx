@@ -70,8 +70,9 @@ function App() {
     <ProductosContext.Provider value={{ productos, setProductos, cargando: cargandoProductos, error: errorProductos, recargar: () => { setCargandoProductos(true); setRevisionProductos(actual => actual + 1) } }}>
     <ContenidosContext.Provider value={{ contenidos, error: errorContenidos, recargar: () => { setRevisionContenidos(actual => actual + 1) } }}>
     <div className="store site-shell admin-shell" data-theme={tema}>
+            <a href="#contenido" className="saltar-contenido">Saltar al contenido</a>
       <Navbar tema={tema} onTemaChange={setTema} />
-      <main className={panel || pathname === '/' ? undefined : 'site-page'}>
+      <main id="contenido" tabIndex="-1" className={panel || pathname === '/' ? undefined : 'site-page'}>
         <Routes>
           <Route path="/" element={<Inicio />} />
           <Route path="/catalogo" element={<Catalogo />} />

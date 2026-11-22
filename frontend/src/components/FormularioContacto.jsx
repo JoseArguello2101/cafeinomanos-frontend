@@ -110,10 +110,12 @@ export default function FormularioContacto() {
                         onChange={manejarCambio}
                         placeholder="Ej: Nombre Apellido"
                         className={errores.nombre ? 'input-error' : ''}
+                        aria-invalid={errores.nombre ? 'true' : undefined}
+                        aria-describedby={errores.nombre ? 'error-nombre' : undefined}
                         disabled={cargando}
                     />
                     {errores.nombre && (
-                        <span className="texto-error">{errores.nombre.join(' ')}</span>
+                        <span className="texto-error" id="error-nombre">{errores.nombre.join(' ')}</span>
                     )}
                 </div>
 
@@ -128,10 +130,12 @@ export default function FormularioContacto() {
                         onChange={manejarCambio}
                         placeholder="Ej: usuario@cafe.cl"
                         className={errores.correo ? 'input-error' : ''}
+                        aria-invalid={errores.correo ? 'true' : undefined}
+                        aria-describedby={errores.correo ? 'error-correo' : undefined}
                         disabled={cargando}
                     />
                     {errores.correo && (
-                        <span className="texto-error">{errores.correo.join(' ')}</span>
+                        <span className="texto-error" id="error-correo">{errores.correo.join(' ')}</span>
                     )}
                 </div>
 
@@ -146,10 +150,12 @@ export default function FormularioContacto() {
                         onChange={manejarCambio}
                         placeholder="Escribe tu consulta, sugerencia o comentario aquí..."
                         className={errores.mensaje ? 'input-error' : ''}
+                        aria-invalid={errores.mensaje ? 'true' : undefined}
+                        aria-describedby={errores.mensaje ? 'error-mensaje' : undefined}
                         disabled={cargando}
                     />
                     {errores.mensaje && (
-                        <span className="texto-error">{errores.mensaje.join(' ')}</span>
+                        <span className="texto-error" id="error-mensaje">{errores.mensaje.join(' ')}</span>
                     )}
                 </div>
 
