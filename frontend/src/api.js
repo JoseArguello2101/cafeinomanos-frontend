@@ -68,6 +68,7 @@ export async function solicitar(ruta, {
     const error = new Error(mensajeDeError(resultado, respuesta))
     error.status = respuesta.status
     error.erroresPorCampo = resultado?.errores || {}
+    error.motivo = resultado?.motivo || ''
     throw error
   }
   return resultado
