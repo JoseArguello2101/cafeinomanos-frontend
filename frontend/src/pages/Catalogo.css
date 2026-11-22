@@ -30,5 +30,11 @@
 .detalle-precio { display: block; font-size: 30px; margin: 24px 0 12px; }
 .catalogo-detalle .catalogo-primario { margin-top: 24px; }
 .site-shell[data-theme='pastel'] .catalogo-tarjeta, .site-shell[data-theme='pastel'] .catalogo-detalle { border-radius: 18px; overflow: hidden; }
+.catalogo-paginacion { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 32px 0 16px; }
+.paginacion-numeros { display: flex; gap: 6px; }
+.paginacion-btn { padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); color: inherit; border-radius: 4px; cursor: pointer; font-size: 13px; }
+.paginacion-btn:hover:not(:disabled) { background: var(--soft); }
+.paginacion-btn.activo { background: var(--accent); color: var(--button); border-color: var(--accent); }
+.paginacion-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 @media (max-width: 900px) { .catalogo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .catalogo-grid, .catalogo-detalle { grid-template-columns: 1fr; } .catalogo-filtros { flex-direction: column; align-items: stretch; padding: 16px; } .catalogo-filtros > div { min-width: 0; } .catalogo-detalle { padding: 16px; gap: 20px; } .catalogo-disponibles { align-self: start; } }

@@ -26,7 +26,7 @@ export function normalizarProducto(producto) {
 }
 
 export async function listarProductos(signal) {
-  const resultado = await solicitar('/productos/', { signal, auth: false })
+  const resultado = await solicitar('/productos/?limit=50', { signal, auth: false })
   if (!Array.isArray(resultado?.data)) throw new Error('La respuesta del backend no tiene el formato esperado.')
   return resultado.data.map(normalizarProducto)
 }
