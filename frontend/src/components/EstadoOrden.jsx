@@ -24,7 +24,10 @@ function EstadoOrden({ estado, variante = 'panel', descripcion, acciones, alAcci
     )
   }
 
-  const listaAcciones = (acciones || definicion.acciones).filter(id => ACCIONES[id])
+  const listaAcciones = (acciones || definicion.acciones)
+    .map(item => (typeof item === 'string' ? { id: item, ...ACCIONES[item] } : { ...ACCIONES[item.id], ...item }))
+    .filter(item => item && item.id)
+
   return (
     <section className={clase} aria-label={`Estado de la orden: ${definicion.etiqueta}`}>
       <div className="estado-orden-cabecera" role="status" aria-live="polite">
@@ -37,13 +40,12 @@ function EstadoOrden({ estado, variante = 'panel', descripcion, acciones, alAcci
       <p className="estado-orden-descripcion">{descripcion || definicion.descripcion}</p>
       {listaAcciones.length > 0 && (
         <div className="estado-orden-acciones">
-          {listaAcciones.map((id, indice) => {
-            const accion = ACCIONES[id]
+          {listaAcciones.map((accion, indice) => {
             const claseBoton = `estado-orden-boton${indice === 0 ? ' estado-orden-boton--primario' : ''}`
             return accion.destino
-              ? <Link key={id} className={claseBoton} to={accion.destino}>{accion.etiqueta}</Link>
-              : <button key={id} type="button" className={claseBoton} onClick={() => alAccionar?.(id)} disabled={ocupado}>
-                  {ocupado && (id === 'actualizar' || id === 'reintentar') ? 'Consultando…' : accion.etiqueta}
+              ? <Link key={accion.id} className={claseBoton} to={accion.destino}>{accion.etiqueta}</Link>
+              : <button key={accion.id} type="button" className={claseBoton} onClick={() => alAccionar?.(accion.id)} disabled={ocupado}>
+                  {ocupado && (accion.id === 'actualizar' || accion.id === 'reintentar') ? 'Consultando…' : accion.etiqueta}
                 </button>
           })}
         </div>

@@ -82,6 +82,7 @@ function App() {
           <Route path="/activar/:token" element={<ActivarCuenta />} />
           <Route path="/pago" element={<Pago />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
+          <Route path="/confirmacion/:id" element={<Confirmacion />} />
           {/* Pasarela de pago simulada (sandbox) y vista a la que vuelve el cliente desde la pasarela. */}
           <Route path="/pago/pasarela-sandbox" element={<PasarelaSandbox />} />
           <Route path="/pago/retorno" element={<PagoRetorno />} />

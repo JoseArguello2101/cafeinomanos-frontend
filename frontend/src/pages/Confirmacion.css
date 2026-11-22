@@ -1,4 +1,14 @@
 /* Estilos exclusivos de la página de confirmación. */
+.compra-titulo-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.compra-titulo-estado h1 { margin-right: auto; }
 .compra-code { font-size: 26px; letter-spacing: 1px; margin: 8px 0 4px !important; }
 .compra-datos { display: grid; gap: 6px; font-size: 13px; margin: 16px 0 !important; }
 .compra-datos span { color: var(--muted); }
+.compra-resumen-compra { margin-top: 20px; border-top: 1px solid var(--line); }
+.compra-resumen--encabezado { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.compra-resumen--item { align-items: flex-start; gap: 16px; }
+.compra-resumen--item strong { display: block; }
+@media (max-width: 600px) {
+  .compra-resumen--item { grid-template-columns: 1fr; }
+  .compra-resumen--item > div:last-child { text-align: left !important; }
+}
