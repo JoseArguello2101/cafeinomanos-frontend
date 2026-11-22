@@ -10,7 +10,7 @@
 /** Minutos que una orden puede seguir sin pagar antes de mostrarse como vencida. */
 export const MINUTOS_VIGENCIA_PAGO = 30
 
-const ESTADOS_PEDIDO_CONFIRMADO = ['PAGADO', 'PREPARANDO', 'LISTO', 'ENTREGADO']
+const ESTADOS_PEDIDO_CONFIRMADO = ['PAGADO', 'CONFIRMADO', 'PREPARANDO', 'LISTO', 'ENTREGADO']
 
 /** Acciones que puede ofrecer un estado. `destino` indica un enlace; sin él, la página decide qué hacer. */
 export const ACCIONES = {
