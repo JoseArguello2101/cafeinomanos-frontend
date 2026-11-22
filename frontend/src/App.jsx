@@ -7,6 +7,7 @@ import DetalleProducto from './pages/DetalleProducto'
 import Carrito from './pages/Carrito'
 import Login from './pages/Login'
 import Registro from './pages/Registro'
+import ActivarCuenta from './pages/ActivarCuenta'
 import Pago from './pages/Pago'
 import Confirmacion from './pages/Confirmacion'
 import Contacto from './pages/Contacto'
@@ -75,6 +76,7 @@ function App() {
           <Route path="/carrito" element={<Carrito />} />
           <Route path="/login" element={<Login />} />
           <Route path="/registro" element={<Registro />} />
+          <Route path="/activar/:token" element={<ActivarCuenta />} />
           <Route path="/pago" element={<Pago />} />
           <Route path="/confirmacion" element={<Confirmacion />} />
           <Route path="/contacto" element={<Contacto />} />
