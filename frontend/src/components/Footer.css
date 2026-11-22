@@ -1,0 +1,76 @@
+.site-shell .site-footer.pie {
+  padding: 32px 24px 20px;
+  text-align: left;
+  font-size: 14px;
+  /* el fondo y la línea superior llegan a todo el ancho de la pantalla,
+     aunque #root tenga un ancho máximo, sin crear barra horizontal */
+  border-top: 0 !important;
+  box-shadow: 0 100vmax 0 100vmax var(--surface), 0 -1px 0 100vmax var(--line);
+  clip-path: inset(-1px -100vmax 0);
+}
+
+.pie-columnas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.site-shell .pie p {
+  margin: 0 0 6px;
+}
+
+.site-shell .pie .pie-marca {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  color: var(--ink) !important;
+}
+
+.site-shell .pie .pie-titulo {
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.pie ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pie li {
+  margin-bottom: 6px;
+}
+
+.pie address {
+  margin: 0;
+  font-style: normal;
+}
+
+.pie a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.pie a:hover {
+  text-decoration: underline;
+}
+
+.site-shell .pie .pie-derechos {
+  max-width: 1000px;
+  margin: 24px auto 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .pie-columnas {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+}
