@@ -27,9 +27,3 @@ dist-ssr
 .env
 .env.*
 !.env.example
-
-# Skills de agentes (instalación local, no versionar)
-.agents/
-.skills/
-.claude/skills/
-skills-lock.json
