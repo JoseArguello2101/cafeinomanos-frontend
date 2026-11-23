@@ -336,6 +336,232 @@ Permite comprobar el estado de ambas bases de datos sin requerir inicio de sesi�
 * **Actualización Parcial (`PATCH /api/users/<id>/`):** Las modificaciones aplican solo a los campos provistos, manteniendo la consistencia de los datos ante ejecuciones múltiples repetidas.
 * **Diseño para Pagos y Reservas:** En la arquitectura de pagos (Sprint 2/3), se emplea un identificador único de transacción (`idempotency_key` o `order_id`) para evitar cobros duplicados en caso de reintentos por caída de red.
 
+### 8.5 Contratos del Flujo de Compra (Checkout, Orden, Reserva y Pago — HU-18 / RNF-05)
+
+El flujo de compra abarca desde la gestión del carrito (anónimo o autenticado) y su combinación al iniciar sesión, hasta la confirmación del pedido con reserva transaccional de stock y el registro o cancelación del pago.
+
+#### 1. Resumen de Endpoints del Flujo de Compra
+
+| Fase | Método y Ruta | Permisos | Propósito |
+|---|---|---|---|
+| **Carrito** | `GET /api/carrito/?session_id=<token>` | Público / Token opcional | Obtiene el carrito activo, totales y posibles inconsistencias de stock o disponibilidad. |
+| **Carrito** | `POST /api/carrito/agregar/` | Público / Token opcional | Agrega unidades de un producto al carrito (sin descontar inventario en esta etapa). |
+| **Carrito** | `PATCH /api/carrito/actualizar/<item_id>/` | Público / Token opcional | Actualiza la cantidad de una línea del carrito validando el stock disponible. |
+| **Carrito** | `DELETE /api/carrito/eliminar/<item_id>/` | Público / Token opcional | Elimina una línea del carrito (devuelve stock solo si era una línea heredada con reserva previa). |
+| **Combinación** | `POST /api/carrito/combinar/` | `IsAuthenticated` (Token) | Fusiona el carrito anónimo con el del cliente por `producto_id`, sumando cantidades sin descartar ítems. |
+| **Checkout / Orden y Reserva** | `POST /api/pedidos/` | Público / Token opcional | Valida inconsistencias, crea la orden (`PENDIENTE`), **reserva/descuenta el stock de forma atómica** y vacía el carrito. |
+| **Orden** | `GET /api/pedidos/listado/` | `IsAuthenticated` (Token) | Lista todas las órdenes (administrador) o las órdenes asociadas al correo del cliente autenticado. |
+| **Orden** | `GET /api/pedidos/<pedido_id>/` | `IsAuthenticated` (Token) | Obtiene el detalle de una orden, sus líneas (`detalles`) y su transacción de pago (`pago`). |
+| **Pago** | `POST /api/pedidos/<pedido_id>/pago/` | `EsAdministrador` | Registra el resultado del pago (`AUTORIZADO` o `RECHAZADO`). Si es rechazado, revierte la reserva de stock. |
+| **Cancelación** | `POST /api/pedidos/<pedido_id>/cancelar/` | `EsAdministrador` | Cancela una orden `PENDIENTE` o `PAGADO`, devuelve el stock reservado al inventario y reversa el pago si aplica. |
+
+#### 2. Contratos Detallados: Entrada, Respuestas y Errores
+
+##### A. Consultar y Combinar Carrito (`GET /api/carrito/` y `POST /api/carrito/combinar/`)
+* **Entrada (`POST /api/carrito/combinar/`):**
+  ```json
+  {
+    "session_id": "token_firmado_del_carrito_anonimo"
+  }
+  ```
+* **Respuesta exitosa (`200 OK`):**
+  ```json
+  {
+    "status": "success",
+    "message": "Carritos combinados correctamente.",
+    "combinado": true,
+    "productos_combinados": 2,
+    "session_id": "nuevo_token_firmado",
+    "requiere_revision": false,
+    "puede_pagar": true,
+    "inconsistencias": [],
+    "carrito": {
+      "id": "b3c8f1a2-...",
+      "session_id": "nuevo_token_firmado",
+      "items": [
+        {
+          "id": 12,
+          "producto_id": 1,
+          "nombre": "Capuccino",
+          "precio_unitario": 3800,
+          "cantidad": 2,
+          "subtotal": 7600,
+          "imagen_url": "https://...",
+          "stock": 15,
+          "disponible": true
+        }
+      ],
+      "total_unidades": 2,
+      "total": 7600,
+      "inconsistencias": [],
+      "requiere_revision": false,
+      "puede_pagar": true
+    }
+  }
+  ```
+* **Detección de inconsistencias (sin descarte silencioso):** Si tras combinar o consultar el carrito hay productos desactivados (`disponible: false`), agotados (`stock: 0`) o cuya cantidad supera el stock (`cantidad > stock`), el backend conserva todas las líneas intactas y devuelve `requiere_revision: true`, `puede_pagar: false` y el detalle en `inconsistencias` (`motivo`: `"desactivado"`, `"agotado"` o `"stock_insuficiente"`).
+* **Errores:** `401 Unauthorized` si se llama a `/api/carrito/combinar/` sin token válido.
+
+##### B. Agregar, Actualizar y Eliminar del Carrito
+* **`POST /api/carrito/agregar/`**
+  * **Entrada:** `{ "producto_id": 1, "cantidad": 2, "session_id": "<opcional>" }`
+  * **Respuesta:** `201 Created` (línea nueva) o `200 OK` (suma a línea existente) con `{ "status": "success", "session_id": "...", "carrito": { ... } }`.
+  * **Errores (`400 Bad Request`):** Producto inexistente, inactivo (`disponible: false`), agotado (`stock <= 0`), cantidad no entera o superior al stock disponible.
+* **`PATCH /api/carrito/actualizar/<item_id>/`**
+  * **Entrada:** `{ "cantidad": 3, "session_id": "<opcional>" }`
+  * **Respuesta (`200 OK`):** Carrito actualizado.
+  * **Errores:** `400 Bad Request` (cantidad `<= 0` o mayor al stock disponible), `404 Not Found` (carrito o línea inexistente).
+* **`DELETE /api/carrito/eliminar/<item_id>/`**
+  * **Entrada:** `{ "session_id": "<opcional>" }`
+  * **Respuesta (`200 OK`):** `{ "status": "success", "stock_devuelto": false, "carrito": { ... } }`.
+  * **Errores:** `404 Not Found` (no hay carrito activo o el ítem no pertenece al carrito).
+
+##### C. Confirmar Checkout, Crear Orden y Reservar Stock (`POST /api/pedidos/`)
+* **Entrada:**
+  ```json
+  {
+    "session_id": "token_firmado_del_carrito",
+    "cliente_nombre": "Beatriz Pinzón",
+    "cliente_email": "cliente@ejemplo.cl",
+    "cliente_telefono": "+56912345678",
+    "tipo_entrega": "despacho",
+    "direccion_entrega": "Av. Providencia 1234, Providencia",
+    "notas": "Medio de pago solicitado: tarjeta. Sin datos de tarjeta."
+  }
+  ```
+  *(Nota: `tipo_entrega` acepta `"retiro"` o `"despacho"`. Si es `"despacho"`, `direccion_entrega` es obligatoria).*
+* **Respuesta exitosa (`201 Created`):**
+  ```json
+  {
+    "status": "success",
+    "message": "Pedido creado correctamente.",
+    "session_id": "token_firmado",
+    "pedido": {
+      "id": 1,
+      "cliente_nombre": "Beatriz Pinzón",
+      "cliente_email": "cliente@ejemplo.cl",
+      "tipo_entrega": "despacho",
+      "direccion_entrega": "Av. Providencia 1234, Providencia",
+      "subtotal": "7600.00",
+      "costo_envio": "0.00",
+      "total": "7600.00",
+      "estado": "PENDIENTE",
+      "detalles": [
+        {
+          "id": 1,
+          "producto_id": 1,
+          "producto_nombre": "Capuccino",
+          "cantidad": 2,
+          "precio_unitario": "3800.00",
+          "subtotal": "7600.00"
+        }
+      ],
+      "pago": null
+    }
+  }
+  ```
+* **Errores (`400 Bad Request`):**
+  * Datos de cliente inválidos o dirección faltante en despacho (`errores` por campo).
+  * Carrito inexistente o vacío.
+  * **Bloqueo por inconsistencias:** Si cualquier producto del carrito está desactivado, agotado o sin stock suficiente, la transacción se aborta sin descontar stock ni vaciar el carrito, devolviendo:
+    ```json
+    {
+      "status": "error",
+      "message": "No se puede continuar con el pago mientras existan productos que requieren revisión.",
+      "requiere_revision": true,
+      "puede_pagar": false,
+      "inconsistencias": [
+        {
+          "item_id": 12,
+          "producto_id": 1,
+          "nombre": "Capuccino",
+          "motivo": "stock_insuficiente",
+          "mensaje": "'Capuccino' solo tiene 5 unidades disponibles y tu carrito solicita 7.",
+          "cantidad_en_carrito": 7,
+          "stock_disponible": 5,
+          "disponible": true
+        }
+      ]
+    }
+    ```
+
+##### D. Consultar Órdenes (`GET /api/pedidos/listado/` y `GET /api/pedidos/<pedido_id>/`)
+* **Respuesta exitosa (`200 OK`):** Devuelve la lista de pedidos o el objeto `pedido` con sus `detalles` y `pago`.
+* **Errores:** `401 Unauthorized` (sin token), `403 Forbidden` (cliente intentando ver el pedido de otro correo), `404 Not Found` (pedido inexistente).
+
+##### E. Registrar Pago (`POST /api/pedidos/<pedido_id>/pago/`)
+* **Entrada:**
+  ```json
+  {
+    "estado": "AUTORIZADO",
+    "transaccion_id_externo": "TBK-987654",
+    "codigo_autorizacion": "1213"
+  }
+  ```
+  *(El campo `estado` acepta `"AUTORIZADO"` o `"RECHAZADO"`).*
+* **Respuesta exitosa (`200 OK`):** `{ "status": "success", "message": "Pago registrado correctamente.", "pedido": { ... } }`.
+* **Errores:** `400 Bad Request` (estado inválido o el pedido ya está en `CANCELADO` / `ENTREGADO`), `403 Forbidden` (no es administrador), `404 Not Found` (pedido inexistente).
+
+##### F. Cancelar Orden y Liberar Reserva (`POST /api/pedidos/<pedido_id>/cancelar/`)
+* **Entrada:** Sin cuerpo obligatorio.
+* **Respuesta exitosa (`200 OK`):** `{ "status": "success", "message": "Pedido cancelado y stock devuelto.", "pedido": { ... } }`.
+* **Errores:** `400 Bad Request` (solo se pueden cancelar pedidos en estado `PENDIENTE` o `PAGADO`), `403 Forbidden` (no es administrador), `404 Not Found` (pedido inexistente).
+
+#### 3. Estados de la Orden (`Pedido`) y de la Transacción (`PagoTransaccion`)
+
+| Estado de la Orden (`Pedido.estado`) | Cuándo se asigna / cambia | Efecto sobre el inventario (Stock) |
+|---|---|---|
+| **`PENDIENTE`** | 1. Al confirmar el checkout (`POST /api/pedidos/`).<br>2. Si el pago se registra como `RECHAZADO` (`POST /api/pedidos/<id>/pago/`). | 1. Al crear la orden, se bloquean los productos (`SELECT ... FOR UPDATE`) y **se descuenta/reserva el stock**.<br>2. Si el pago es `RECHAZADO`, **se devuelve el stock reservado** al inventario y el producto vuelve a `disponible = True`. |
+| **`PAGADO`** | Al registrar un pago con `estado: "AUTORIZADO"` en `POST /api/pedidos/<id>/pago/`. | Mantiene el stock ya reservado al crear el pedido. La transacción pasa a `AUTORIZADO`. |
+| **`PREPARANDO`** | Cuando la cafetería inicia la preparación de un pedido pagado (actualización administrativa). | Sin cambios de stock. |
+| **`LISTO`** | Cuando el pedido está terminado y listo para retiro en local o despacho a domicilio. | Sin cambios de stock. |
+| **`ENTREGADO`** | Estado final cuando el cliente recibe su pedido. No admite nuevos cambios de pago ni cancelación. | Venta consolidada definitivamente. |
+| **`CANCELADO`** | Al ejecutar `POST /api/pedidos/<id>/cancelar/` sobre un pedido `PENDIENTE` o `PAGADO`. | **Restituye íntegramente el stock** de cada `DetallePedido` al inventario (`disponible = True`). Si tenía un pago `AUTORIZADO`, la transacción pasa a **`REVERSADO`**. |
+
+#### 4. Diagrama de Secuencia del Flujo de Compra
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Cliente
+    participant FE as Frontend (React)
+    participant API as Backend API (DRF)
+    participant DB as BD Relacional + MongoDB
+
+    C->>FE: Agrega productos como visitante
+    FE->>API: POST /api/carrito/agregar/ {producto_id, cantidad}
+    API->>DB: Crea/actualiza ItemCarrito (sin descontar stock)
+    API-->>FE: 201 Created {session_id firmado, carrito}
+
+    C->>FE: Inicia sesión desde el carrito
+    FE->>API: POST /api/login/ {email, password}
+    API-->>FE: 200 OK {token, usuario}
+    FE->>API: POST /api/carrito/combinar/ {session_id} + Token
+    API->>DB: Suma cantidades por producto_id y evalúa inconsistencias
+    API-->>FE: 200 OK {carrito combinado, requiere_revision, inconsistencias}
+    FE-->>C: Redirige a /carrito y muestra ítems (o alerta de revisión)
+
+    C->>FE: Completa datos de entrega y confirma pedido
+    FE->>API: POST /api/pedidos/ {cliente_*, tipo_entrega, session_id}
+    API->>DB: SELECT ... FOR UPDATE sobre productos del carrito
+    alt Existen inconsistencias (desactivado, agotado o stock insuficiente)
+        API-->>FE: 400 Bad Request {requiere_revision: true, inconsistencias}
+        FE-->>C: Impide el pago y solicita corregir el carrito
+    else Carrito válido y con stock suficiente
+        API->>DB: Crea Pedido (PENDIENTE) + DetallePedido, descuenta stock y vacía carrito
+        API-->>FE: 201 Created {pedido en estado PENDIENTE}
+        FE-->>C: Muestra pantalla de Confirmación (/confirmacion)
+    end
+
+    alt Pago autorizado por administración / pasarela
+        API->>DB: POST /api/pedidos/<id>/pago/ {estado: "AUTORIZADO"}
+        DB-->>API: PagoTransaccion = AUTORIZADO, Pedido = PAGADO
+    else Pago rechazado o pedido cancelado
+        API->>DB: POST /api/pedidos/<id>/pago/ (RECHAZADO) o /cancelar/
+        DB-->>API: Restituye stock al inventario y marca REVERSADO / CANCELADO
+    end
+```
+
 ---
 
 ## 9. URLs, Plataformas, Cuotas y Persistencia
