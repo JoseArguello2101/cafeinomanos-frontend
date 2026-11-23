@@ -20,6 +20,7 @@ import AdminProductos from './pages/AdminProductos'
 import AdminContenidos from './pages/AdminContenidos'
 import AdminImportar from './pages/AdminImportar'
 import AdminIncidencias from './pages/AdminIncidencias'
+import AdminNotificaciones from './pages/AdminNotificaciones'
 import NoEncontrada from './pages/NoEncontrada'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -102,6 +103,9 @@ function App() {
           {/* Panel de incidencias de compra: solo administradores (RutaAdmin) y su versión demo con datos de ejemplo. */}
           <Route path="/admin/incidencias" element={<RutaAdmin><AdminIncidencias key={pathname} tema={tema} /></RutaAdmin>} />
           <Route path="/demo/admin/incidencias" element={<AdminIncidencias key={pathname} demo tema={tema} />} />
+          {/* Panel de correos de compra fallidos: solo administradores y su versión demo. */}
+          <Route path="/admin/notificaciones" element={<RutaAdmin><AdminNotificaciones key={pathname} tema={tema} /></RutaAdmin>} />
+          <Route path="/demo/admin/notificaciones" element={<AdminNotificaciones key={pathname} demo tema={tema} />} />
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>

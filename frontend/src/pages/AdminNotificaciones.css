@@ -1,0 +1,27 @@
+/* Panel de correos de compra. Usa los tokens de tema (--ink, --soft, --line…) para verse bien en los 4 temas. */
+
+.correos-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+.correos-barra select { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; }
+
+/* Leyenda: diferencia entre fallo confirmado y resultado incierto */
+.correos-leyenda { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 0 0 20px; }
+.correos-leyenda > div { padding: 12px 14px; background: var(--surface); border: 1px solid var(--line) !important; border-radius: 4px; }
+.correos-leyenda dd { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
+.correos-vacio { padding: 24px; text-align: center; background: var(--soft); border: 1px dashed var(--line) !important; color: var(--ink); }
+
+/* El error puede ser largo: se permite el salto de línea solo en esa columna */
+.admin-panel .table td.correo-error { white-space: normal; min-width: 220px; max-width: 360px; overflow-wrap: anywhere; font-size: 12px; color: var(--muted); }
+
+/*
+ * Insignias y avisos: el texto siempre usa --ink sobre --soft/--surface (mismo contraste que el resto del panel).
+ * El tono se distingue por ícono, texto y estilo de borde, no solo por color.
+ */
+.correo-insignia { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; font-size: 12px; color: var(--ink); background: var(--soft); border-radius: 4px; }
+.correo-aviso { margin: 0 0 16px; padding: 10px 14px; font-size: 13px; color: var(--ink) !important; background: var(--soft); border-radius: 4px; }
+.correos-admin .tono-ok { border: 2px solid var(--accent) !important; }
+.correos-admin .tono-aviso { border: 2px dashed var(--accent) !important; }
+.correos-admin .tono-error { border: 3px double var(--accent) !important; }
+.correos-admin .tono-neutro { border: 1px dotted var(--muted) !important; background: var(--surface); }
+
+.admin-panel.store[data-theme='pastel'] .correos-leyenda > div { border-radius: 18px; }
