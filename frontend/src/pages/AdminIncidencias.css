@@ -1,0 +1,42 @@
+/* Panel de incidencias de compra. Usa los tokens de tema (--ink, --soft, --line…) para verse bien en los 4 temas. */
+
+.incidencias-barra { display: flex; align-items: center; gap: 12px; }
+
+.incidencias-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.incidencias-vacio { padding: 24px; text-align: center; background: var(--soft); border: 1px dashed var(--line) !important; }
+
+/* Tarjeta de cada orden */
+.incidencia { padding: 18px; background: var(--surface); border: 1px solid var(--line) !important; border-radius: 4px; }
+.incidencia-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.admin-panel.store .incidencia h3 { margin: 0 0 4px; font-size: 18px; color: var(--ink); font-family: Georgia, 'Times New Roman', serif; font-weight: 400; }
+.admin-panel.store .incidencia-cabecera p { margin: 0; font-size: 13px; overflow-wrap: anywhere; }
+.incidencia-resumen { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; color: var(--ink); }
+.incidencia-resumen span { font-size: 12px; color: var(--muted); }
+.admin-panel.store .incidencia-estado { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0 0; font-size: 13px; color: var(--ink) !important; }
+
+/* Pago, reserva e inventario */
+.incidencia-datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 14px 0 0; }
+.incidencia-dato dt { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.incidencia-dato dd { margin: 0; }
+.incidencia-movimientos { margin: 10px 0 0; padding-left: 18px; font-size: 12px; color: var(--muted); }
+
+/*
+ * Insignias y avisos: el texto siempre usa --ink sobre --surface/--soft (mismo contraste que el resto del panel).
+ * El tono se distingue por ícono, texto y estilo de borde, no solo por color.
+ */
+.incidencia-insignia { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; font-size: 12px; color: var(--ink); background: var(--soft); border: 1px solid var(--line) !important; border-radius: 4px; }
+.incidencia-aviso { margin: 14px 0 0; padding: 10px 14px; font-size: 13px; color: var(--ink) !important; background: var(--soft); border: 1px solid var(--line) !important; border-radius: 4px; }
+.tono-ok { border: 2px solid var(--accent) !important; }
+.tono-aviso { border: 2px dashed var(--accent) !important; }
+.tono-error { border: 3px double var(--accent) !important; }
+.tono-neutro { border: 1px dotted var(--muted) !important; background: var(--surface); }
+
+.incidencia-acciones { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+.admin-panel.store[data-theme='pastel'] .incidencia { border-radius: 18px; }
+
+/* En pantallas angostas el total pasa debajo del cliente */
+@media (max-width: 575px) {
+  .incidencia-resumen { align-items: flex-start; }
+  .incidencia-acciones .btn { width: 100%; }
+}
