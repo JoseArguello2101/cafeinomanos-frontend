@@ -12,7 +12,7 @@
 | **Patricio Chaug** | **Scrum Master (SM)** & Desarrollador Frontend | Gestión Ágil & Frontend | Coordinación de ceremonias ágiles, organización de sprints, tablero de tareas, desarrollo de componentes e interfaz en React + Vite. |
 | **Javiera Fuentealba** | Desarrolladora Backend | Backend & Bases de Datos | Configuración del entorno Django, endpoints de autenticación por Token, conexión y modelos en PostgreSQL y MongoDB Atlas, e investigación de pasarela de pago en modo Sandbox. |
 | **Brandon Valdés** | Desarrollador Backend | Backend & API REST | Desarrollo de endpoints RESTful, validación de datos, control de lógica de negocio y gestión de usuarios. |
-| **Gabriel Moreno** | Desarrollador Backend | Backend & Seguridad | Implementación de validaciones de seguridad, endpoints de salud/diagnóstico de BD, manejo de estados y sesiones. |
+| **Gabriel Moreno** | **QA & Desarrollador Backend** | QA, Backend & Seguridad | Aseguramiento de calidad (QA), validaciones de seguridad, endpoints de salud/diagnóstico de BD, manejo de estados, sesiones y despliegue del backend. |
 | **Cristóbal Garrido** | Diseñador UI/UX & Desarrollador Frontend | Diseño & Frontend | Identidad corporativa, wireframes y bocetos navegables (Sprint 1), diseño de paletas temáticas y maquetación de vistas en React. |
 | **José Argüello** | Desarrollador Frontend | Frontend & Integración | Implementación de vistas navegables, enrutamiento con React Router DOM, integración de componentes y consumo de la API. |
 
@@ -37,6 +37,12 @@
   * Gestión de usuarios (`/api/users/`, `/api/users/<id>/`).
   * Interfaz Frontend moderna con **React 19** y **Vite**.
   * **Investigación Técnica de Pasarela de Pagos Sandbox** ([backend/docs/2_investigacion_pasarela_pago_sandbox.md](backend/docs/2_investigacion_pasarela_pago_sandbox.md)).
+* **Entrega Final (Catálogo, Carrito, Checkout, Reservas, Calidad y Despliegue):**
+  * Catálogo público paginado, página de detalle con galería interactiva de múltiples imágenes (4 a 6) e imagen alternativa de respaldo.
+  * Carrito anónimo con token firmado y combinación sin descarte silencioso al iniciar sesión (`POST /api/carrito/combinar/`), con retorno automático al carrito.
+  * Registro y activación de cuentas mediante enlace de un solo uso con hash SHA-256 (`/api/activacion/confirmar/`).
+  * Flujo de compra con reserva indivisible de stock (vigencia de 15 minutos), liberación segura e idempotente de reservas, pasarela Sandbox Webpay Plus, consolidación de `MovimientoInventario` y consulta segura del resumen de la orden.
+  * Conciliación idempotente de operaciones interrumpidas, panel administrativo de incidencias y reintento de notificaciones, cobertura de pruebas del **93 %** en módulos críticos y despliegue productivo en **Vercel** y **Render**.
 
 ### 2.3 Mejoras Opcionales (Roadmap Futuro)
 - [x] **Investigación de pasarela de pago en modo Sandbox:** Análisis de Transbank Webpay Plus, Mercado Pago y Stripe con guía de integración Django + DRF ([Documento Técnico](backend/docs/2_investigacion_pasarela_pago_sandbox.md)).
@@ -241,9 +247,25 @@ MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster0.xxxx.mongodb.net/?retryW
 MONGODB_DB_NAME=paraiso_cafe_nosql
 
 # ==============================================================================
-# 3. POLÍTICA DE ORÍGENES CRUZADOS (CORS)
+# 3. POLÍTICA DE ORÍGENES CRUZADOS (CORS) Y DESPLIEGUE
 # ==============================================================================
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+FRONTEND_URL=http://localhost:5173
+WEBPAY_RETURN_URL=http://localhost:5173/confirmacion
+VIGENCIA_ACTIVACION_HORAS=24
+
+# ==============================================================================
+# 4. PRIMER ADMINISTRADOR AUTOMÁTICO EN DESPLIEGUE (Opcional para build.sh)
+# ==============================================================================
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@paraisocafe.cl
+ADMIN_PASSWORD=cambiar_por_contrasena_segura
+```
+
+Para el **Frontend** (`frontend/.env`, basado en `frontend/.env.example`):
+
+```env
+VITE_API_URL=http://localhost:8000/api
 ```
 
 >Nunca comparta contraseñas ni cadenas URI de MongoDB en repositorios públicos. El archivo `.env` se encuentra explícitamente excluido mediante el `.gitignore`.
@@ -285,14 +307,26 @@ Los usuarios estándar pueden registrarse mediante el endpoint seguro de la API:
 
 ## 8. Pruebas, Reportes, Estados, Reservas e Idempotencia
 
-### 8.1 Ejecución de Pruebas Automatizadas
-* **Backend:**
+### 8.1 Ejecución de Pruebas Automatizadas y Cobertura (RNF-14)
+* **Backend (Suite completa):**
   ```powershell
   python manage.py test api
   ```
-* **Frontend (Linting de sintaxis y buenas prácticas):**
+* **Backend (Medición de cobertura excluyendo `venv/`, `migrations/`, `config/` y tests vía `.coveragerc`):**
+  ```powershell
+  coverage run --rcfile=.coveragerc manage.py test api.test_auth api.test_seguridad api.test_activacion api.test_reserva_indivisible api.test_liberacion_reservas api.test_confirmacion_orden api.test_conciliacion api.test_recuperacion_operaciones api.test_checkout api.test_resumen_orden api.test_carrito_combinar api.test_cobertura_modulos_criticos
+  coverage report --rcfile=.coveragerc --include="*/api/permissions.py,*/api/auth_views.py,*/api/servicio_activacion.py,*/api/colecciones_mongodb/reservas.py,*/api/servicio_confirmacion.py,*/api/servicio_pasarela.py,*/api/servicio_conciliacion.py,*/api/checkout_views.py"
+  ```
+  * **Cobertura alcanzada en módulos críticos (autorización, reserva y confirmación):** **`93 %`** (superando el umbral mínimo del `80 %` exigido por RNF-14).
+* **Reportes técnicos guardados en el repositorio Backend (`docs/`):**
+  * `docs/informe_cobertura_pruebas.md` — Cobertura de pruebas por módulo crítico (`93 %`).
+  * `docs/informe_pruebas_recuperacion.md` — Evidencia de recuperación ante fallos e idempotencia (HU-14 / RNF-10).
+  * `docs/informe_carga_catalogo.md` — Pruebas de carga del catálogo (RNF-02 / RNF-03).
+  * `docs/reporte_seguridad.md` y `docs/despliegue_y_limitaciones.md` — Auditoría de seguridad y despliegue.
+* **Frontend (Linting y compilación):**
   ```bash
   npm run lint
+  npm run build
   ```
 
 ### 8.2 Endpoint de Diagnóstico y Salud (`/api/db-status/`)
@@ -331,24 +365,253 @@ Permite comprobar el estado de ambas bases de datos sin requerir inicio de sesi�
 | `403 FORBIDDEN` | Acceso denegado | Intento de login en cuenta con `is_active: false` (cuenta suspendida). |
 | `404 NOT FOUND` | No encontrado | Usuario u objeto inexistente para edición o consulta. |
 
-### 8.4 Idempotencia y Concurrencia
-* **Registro de Usuarios:** Idempotente frente a reintentos; si el correo ya existe, retorna `400 Bad Request` indicando que el registro ya fue procesado, impidiendo duplicidad de cuentas.
-* **Actualización Parcial (`PATCH /api/users/<id>/`):** Las modificaciones aplican solo a los campos provistos, manteniendo la consistencia de los datos ante ejecuciones múltiples repetidas.
-* **Diseño para Pagos y Reservas:** En la arquitectura de pagos (Sprint 2/3), se emplea un identificador único de transacción (`idempotency_key` o `order_id`) para evitar cobros duplicados en caso de reintentos por caída de red.
+### 8.4 Reservas de Stock, Estados e Idempotencia
+* **Registro de Usuarios y Activación:** Idempotente frente a reintentos; el correo se valida como único y los enlaces de activación se almacenan con hash SHA-256 para un único consumo atómico (`consumir_solicitud`).
+* **Reserva Indivisible y Liberación Segura (`reservas_stock`):** Al reservar líneas de una orden se incrementa únicamente `stock_reservado` (vigencia de **15 minutos**) sin alterar `stock_fisico`. Ante pago rechazado, cancelado o vencido (siempre verificando antes el estado del pago), la liberación reduce solo `stock_reservado` de forma **idempotente** y nunca libera reservas ya consolidadas.
+* **Idempotencia en Checkout, Pagos y Conciliación:**
+  * `POST /api/pedidos/` acepta `operacion_id` o cabecera `Idempotency-Key` para devolver la misma orden ante reintentos o doble clic sin duplicar descuentos de stock.
+  * `POST /api/pedidos/<id>/pago/iniciar/` reutiliza intentos `INICIADO` activos, y `POST /api/pedidos/<id>/pago/retorno/` es idempotente ante confirmaciones repetidas.
+  * La conciliación (`/api/admin/conciliacion/`) recupera órdenes interrumpidas (`PENDIENTE`, `CONFIRMACION_PENDIENTE`, `REVISION_REQUERIDA`) y no duplica efectos al ejecutarse repetidamente.
+
+### 8.5 Contratos del Flujo de Compra (Checkout, Orden, Reserva y Pago — HU-18 / RNF-05)
+
+El flujo de compra abarca desde la gestión del carrito (anónimo o autenticado) y su combinación al iniciar sesión, hasta la confirmación del pedido con reserva transaccional de stock y el registro o cancelación del pago.
+
+#### 1. Resumen de Endpoints del Flujo de Compra
+
+| Fase | Método y Ruta | Permisos | Propósito |
+|---|---|---|---|
+| **Carrito** | `GET /api/carrito/?session_id=<token>` | Público / Token opcional | Obtiene el carrito activo, totales y posibles inconsistencias de stock o disponibilidad. |
+| **Carrito** | `POST /api/carrito/agregar/` | Público / Token opcional | Agrega unidades de un producto al carrito (sin descontar inventario en esta etapa). |
+| **Carrito** | `PATCH /api/carrito/actualizar/<item_id>/` | Público / Token opcional | Actualiza la cantidad de una línea del carrito validando el stock disponible. |
+| **Carrito** | `DELETE /api/carrito/eliminar/<item_id>/` | Público / Token opcional | Elimina una línea del carrito (devuelve stock solo si era una línea heredada con reserva previa). |
+| **Combinación** | `POST /api/carrito/combinar/` | `IsAuthenticated` (Token) | Fusiona el carrito anónimo con el del cliente por `producto_id`, sumando cantidades sin descartar ítems. |
+| **Checkout / Orden y Reserva** | `POST /api/pedidos/` | Público / Token opcional | Valida inconsistencias, crea la orden (`PENDIENTE`), **reserva/descuenta el stock de forma atómica** y vacía el carrito. |
+| **Orden** | `GET /api/pedidos/listado/` | `IsAuthenticated` (Token) | Lista todas las órdenes (administrador) o las órdenes asociadas al correo del cliente autenticado. |
+| **Orden** | `GET /api/pedidos/<pedido_id>/` | `IsAuthenticated` (Token) | Obtiene el detalle de una orden, sus líneas (`detalles`) y su transacción de pago (`pago`). |
+| **Pago** | `POST /api/pedidos/<pedido_id>/pago/` | `EsAdministrador` | Registra el resultado del pago (`AUTORIZADO` o `RECHAZADO`). Si es rechazado, revierte la reserva de stock. |
+| **Cancelación** | `POST /api/pedidos/<pedido_id>/cancelar/` | `EsAdministrador` | Cancela una orden `PENDIENTE` o `PAGADO`, devuelve el stock reservado al inventario y reversa el pago si aplica. |
+
+#### 2. Contratos Detallados: Entrada, Respuestas y Errores
+
+##### A. Consultar y Combinar Carrito (`GET /api/carrito/` y `POST /api/carrito/combinar/`)
+* **Entrada (`POST /api/carrito/combinar/`):**
+  ```json
+  {
+    "session_id": "token_firmado_del_carrito_anonimo"
+  }
+  ```
+* **Respuesta exitosa (`200 OK`):**
+  ```json
+  {
+    "status": "success",
+    "message": "Carritos combinados correctamente.",
+    "combinado": true,
+    "productos_combinados": 2,
+    "session_id": "nuevo_token_firmado",
+    "requiere_revision": false,
+    "puede_pagar": true,
+    "inconsistencias": [],
+    "carrito": {
+      "id": "b3c8f1a2-...",
+      "session_id": "nuevo_token_firmado",
+      "items": [
+        {
+          "id": 12,
+          "producto_id": 1,
+          "nombre": "Capuccino",
+          "precio_unitario": 3800,
+          "cantidad": 2,
+          "subtotal": 7600,
+          "imagen_url": "https://...",
+          "stock": 15,
+          "disponible": true
+        }
+      ],
+      "total_unidades": 2,
+      "total": 7600,
+      "inconsistencias": [],
+      "requiere_revision": false,
+      "puede_pagar": true
+    }
+  }
+  ```
+* **Detección de inconsistencias (sin descarte silencioso):** Si tras combinar o consultar el carrito hay productos desactivados (`disponible: false`), agotados (`stock: 0`) o cuya cantidad supera el stock (`cantidad > stock`), el backend conserva todas las líneas intactas y devuelve `requiere_revision: true`, `puede_pagar: false` y el detalle en `inconsistencias` (`motivo`: `"desactivado"`, `"agotado"` o `"stock_insuficiente"`).
+* **Errores:** `401 Unauthorized` si se llama a `/api/carrito/combinar/` sin token válido.
+
+##### B. Agregar, Actualizar y Eliminar del Carrito
+* **`POST /api/carrito/agregar/`**
+  * **Entrada:** `{ "producto_id": 1, "cantidad": 2, "session_id": "<opcional>" }`
+  * **Respuesta:** `201 Created` (línea nueva) o `200 OK` (suma a línea existente) con `{ "status": "success", "session_id": "...", "carrito": { ... } }`.
+  * **Errores (`400 Bad Request`):** Producto inexistente, inactivo (`disponible: false`), agotado (`stock <= 0`), cantidad no entera o superior al stock disponible.
+* **`PATCH /api/carrito/actualizar/<item_id>/`**
+  * **Entrada:** `{ "cantidad": 3, "session_id": "<opcional>" }`
+  * **Respuesta (`200 OK`):** Carrito actualizado.
+  * **Errores:** `400 Bad Request` (cantidad `<= 0` o mayor al stock disponible), `404 Not Found` (carrito o línea inexistente).
+* **`DELETE /api/carrito/eliminar/<item_id>/`**
+  * **Entrada:** `{ "session_id": "<opcional>" }`
+  * **Respuesta (`200 OK`):** `{ "status": "success", "stock_devuelto": false, "carrito": { ... } }`.
+  * **Errores:** `404 Not Found` (no hay carrito activo o el ítem no pertenece al carrito).
+
+##### C. Confirmar Checkout, Crear Orden y Reservar Stock (`POST /api/pedidos/`)
+* **Entrada:**
+  ```json
+  {
+    "session_id": "token_firmado_del_carrito",
+    "cliente_nombre": "Beatriz Pinzón",
+    "cliente_email": "cliente@ejemplo.cl",
+    "cliente_telefono": "+56912345678",
+    "tipo_entrega": "despacho",
+    "direccion_entrega": "Av. Providencia 1234, Providencia",
+    "notas": "Medio de pago solicitado: tarjeta. Sin datos de tarjeta."
+  }
+  ```
+  *(Nota: `tipo_entrega` acepta `"retiro"` o `"despacho"`. Si es `"despacho"`, `direccion_entrega` es obligatoria).*
+* **Respuesta exitosa (`201 Created`):**
+  ```json
+  {
+    "status": "success",
+    "message": "Pedido creado correctamente.",
+    "session_id": "token_firmado",
+    "pedido": {
+      "id": 1,
+      "cliente_nombre": "Beatriz Pinzón",
+      "cliente_email": "cliente@ejemplo.cl",
+      "tipo_entrega": "despacho",
+      "direccion_entrega": "Av. Providencia 1234, Providencia",
+      "subtotal": "7600.00",
+      "costo_envio": "0.00",
+      "total": "7600.00",
+      "estado": "PENDIENTE",
+      "detalles": [
+        {
+          "id": 1,
+          "producto_id": 1,
+          "producto_nombre": "Capuccino",
+          "cantidad": 2,
+          "precio_unitario": "3800.00",
+          "subtotal": "7600.00"
+        }
+      ],
+      "pago": null
+    }
+  }
+  ```
+* **Errores (`400 Bad Request`):**
+  * Datos de cliente inválidos o dirección faltante en despacho (`errores` por campo).
+  * Carrito inexistente o vacío.
+  * **Bloqueo por inconsistencias:** Si cualquier producto del carrito está desactivado, agotado o sin stock suficiente, la transacción se aborta sin descontar stock ni vaciar el carrito, devolviendo:
+    ```json
+    {
+      "status": "error",
+      "message": "No se puede continuar con el pago mientras existan productos que requieren revisión.",
+      "requiere_revision": true,
+      "puede_pagar": false,
+      "inconsistencias": [
+        {
+          "item_id": 12,
+          "producto_id": 1,
+          "nombre": "Capuccino",
+          "motivo": "stock_insuficiente",
+          "mensaje": "'Capuccino' solo tiene 5 unidades disponibles y tu carrito solicita 7.",
+          "cantidad_en_carrito": 7,
+          "stock_disponible": 5,
+          "disponible": true
+        }
+      ]
+    }
+    ```
+
+##### D. Consultar Órdenes (`GET /api/pedidos/listado/` y `GET /api/pedidos/<pedido_id>/`)
+* **Respuesta exitosa (`200 OK`):** Devuelve la lista de pedidos o el objeto `pedido` con sus `detalles` y `pago`.
+* **Errores:** `401 Unauthorized` (sin token), `403 Forbidden` (cliente intentando ver el pedido de otro correo), `404 Not Found` (pedido inexistente).
+
+##### E. Registrar Pago (`POST /api/pedidos/<pedido_id>/pago/`)
+* **Entrada:**
+  ```json
+  {
+    "estado": "AUTORIZADO",
+    "transaccion_id_externo": "TBK-987654",
+    "codigo_autorizacion": "1213"
+  }
+  ```
+  *(El campo `estado` acepta `"AUTORIZADO"` o `"RECHAZADO"`).*
+* **Respuesta exitosa (`200 OK`):** `{ "status": "success", "message": "Pago registrado correctamente.", "pedido": { ... } }`.
+* **Errores:** `400 Bad Request` (estado inválido o el pedido ya está en `CANCELADO` / `ENTREGADO`), `403 Forbidden` (no es administrador), `404 Not Found` (pedido inexistente).
+
+##### F. Cancelar Orden y Liberar Reserva (`POST /api/pedidos/<pedido_id>/cancelar/`)
+* **Entrada:** Sin cuerpo obligatorio.
+* **Respuesta exitosa (`200 OK`):** `{ "status": "success", "message": "Pedido cancelado y stock devuelto.", "pedido": { ... } }`.
+* **Errores:** `400 Bad Request` (solo se pueden cancelar pedidos en estado `PENDIENTE` o `PAGADO`), `403 Forbidden` (no es administrador), `404 Not Found` (pedido inexistente).
+
+#### 3. Estados de la Orden (`Pedido`) y de la Transacción (`PagoTransaccion`)
+
+| Estado de la Orden (`Pedido.estado`) | Cuándo se asigna / cambia | Efecto sobre el inventario (Stock) |
+|---|---|---|
+| **`PENDIENTE`** | 1. Al confirmar el checkout (`POST /api/pedidos/`).<br>2. Si el pago se registra como `RECHAZADO` (`POST /api/pedidos/<id>/pago/`). | 1. Al crear la orden, se bloquean los productos (`SELECT ... FOR UPDATE`) y **se descuenta/reserva el stock**.<br>2. Si el pago es `RECHAZADO`, **se devuelve el stock reservado** al inventario y el producto vuelve a `disponible = True`. |
+| **`PAGADO`** | Al registrar un pago con `estado: "AUTORIZADO"` en `POST /api/pedidos/<id>/pago/`. | Mantiene el stock ya reservado al crear el pedido. La transacción pasa a `AUTORIZADO`. |
+| **`PREPARANDO`** | Cuando la cafetería inicia la preparación de un pedido pagado (actualización administrativa). | Sin cambios de stock. |
+| **`LISTO`** | Cuando el pedido está terminado y listo para retiro en local o despacho a domicilio. | Sin cambios de stock. |
+| **`ENTREGADO`** | Estado final cuando el cliente recibe su pedido. No admite nuevos cambios de pago ni cancelación. | Venta consolidada definitivamente. |
+| **`CANCELADO`** | Al ejecutar `POST /api/pedidos/<id>/cancelar/` sobre un pedido `PENDIENTE` o `PAGADO`. | **Restituye íntegramente el stock** de cada `DetallePedido` al inventario (`disponible = True`). Si tenía un pago `AUTORIZADO`, la transacción pasa a **`REVERSADO`**. |
+
+#### 4. Diagrama de Secuencia del Flujo de Compra
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor C as Cliente
+    participant FE as Frontend (React)
+    participant API as Backend API (DRF)
+    participant DB as BD Relacional + MongoDB
+
+    C->>FE: Agrega productos como visitante
+    FE->>API: POST /api/carrito/agregar/ {producto_id, cantidad}
+    API->>DB: Crea/actualiza ItemCarrito (sin descontar stock)
+    API-->>FE: 201 Created {session_id firmado, carrito}
+
+    C->>FE: Inicia sesión desde el carrito
+    FE->>API: POST /api/login/ {email, password}
+    API-->>FE: 200 OK {token, usuario}
+    FE->>API: POST /api/carrito/combinar/ {session_id} + Token
+    API->>DB: Suma cantidades por producto_id y evalúa inconsistencias
+    API-->>FE: 200 OK {carrito combinado, requiere_revision, inconsistencias}
+    FE-->>C: Redirige a /carrito y muestra ítems (o alerta de revisión)
+
+    C->>FE: Completa datos de entrega y confirma pedido
+    FE->>API: POST /api/pedidos/ {cliente_*, tipo_entrega, session_id}
+    API->>DB: SELECT ... FOR UPDATE sobre productos del carrito
+    alt Existen inconsistencias (desactivado, agotado o stock insuficiente)
+        API-->>FE: 400 Bad Request {requiere_revision: true, inconsistencias}
+        FE-->>C: Impide el pago y solicita corregir el carrito
+    else Carrito válido y con stock suficiente
+        API->>DB: Crea Pedido (PENDIENTE) + DetallePedido, descuenta stock y vacía carrito
+        API-->>FE: 201 Created {pedido en estado PENDIENTE}
+        FE-->>C: Muestra pantalla de Confirmación (/confirmacion)
+    end
+
+    alt Pago autorizado por administración / pasarela
+        API->>DB: POST /api/pedidos/<id>/pago/ {estado: "AUTORIZADO"}
+        DB-->>API: PagoTransaccion = AUTORIZADO, Pedido = PAGADO
+    else Pago rechazado o pedido cancelado
+        API->>DB: POST /api/pedidos/<id>/pago/ (RECHAZADO) o /cancelar/
+        DB-->>API: Restituye stock al inventario y marca REVERSADO / CANCELADO
+    end
+```
 
 ---
 
 ## 9. URLs, Plataformas, Cuotas y Persistencia
 
-### 9.1 Tabla de URLs del Proyecto
-| Servicio / Módulo | URL Local | Descripción |
-|---|---|---|
-| **Frontend Web** | `http://localhost:5173/` | Aplicación SPA principal en React. |
-| **API Backend** | `http://localhost:8000/api/` | Raíz de servicios RESTful. |
-| **Test Endpoint** | `http://localhost:8000/api/test/` | Comprobación rápida de respuesta backend. |
-| **Diagnóstico DB** | `http://localhost:8000/api/db-status/` | Chequeo de conexión PostgreSQL y MongoDB. |
-| **Panel Admin** | `http://localhost:8000/admin/` | Panel de gestión administrativa de Django. |
-| **Bocetos Sprint 1** | `http://localhost:5175/` | Presentación estática de temas e identidad. |
+### 9.1 Tabla de URLs del Proyecto (Local y Despliegue)
+| Servicio / Módulo | URL Local | URL de Producción (Despliegue) | Descripción |
+|---|---|---|---|
+| **Frontend Web (Vercel)** | `http://localhost:5173/` | `https://cafeinomanos.vercel.app/` | Aplicación SPA principal en React + Vite. |
+| **API Backend (Render)** | `http://localhost:8000/api/` | `https://dwebs03backendcafein-manos.onrender.com/api/` | Raíz de servicios RESTful en Django REST Framework. |
+| **Diagnóstico DB** | `http://localhost:8000/api/db-status/` | `https://dwebs03backendcafein-manos.onrender.com/api/db-status/` | Chequeo de conexión PostgreSQL/SQLite y MongoDB Atlas. |
+| **Test Endpoint** | `http://localhost:8000/api/test/` | `https://dwebs03backendcafein-manos.onrender.com/api/test/` | Comprobación rápida de respuesta backend. |
+| **Panel Admin Django** | `http://localhost:8000/admin/` | `https://dwebs03backendcafein-manos.onrender.com/admin/` | Panel de gestión administrativa de Django. |
+| **Bocetos Sprint 1** | `http://localhost:5175/` | — | Presentación estática de temas e identidad. |
 
 ### 9.2 Plataformas de Despliegue Sugeridas
 * **Frontend:** Vercel o Netlify (despliegue continuo desde rama `main`).
@@ -409,8 +672,10 @@ mongorestore --uri="<TU_MONGODB_URI>" ./backup_mongo/
   * `refactor: ...` Reestructuración de código sin alterar su comportamiento externo.
 
 ### 11.2 Limitaciones Conocidas
-1. **Pasarela de Pagos:** En el Sprint actual la pasarela de pagos se encuentra en modalidad mock (wireframe navegable y validación de formulario, sin cargo bancario real en línea).
-2. **Cuentas Suspendidas:** La suspensión de cuentas opera a nivel de backend validando `is_active=False` al momento de iniciar sesión y en la modificación mediante el endpoint `PATCH /api/users/<id>/`.
+1. **Pasarela de Pagos Sandbox:** La integración con Webpay Plus opera en modo Sandbox controlado por el backend (sin cobros bancarios reales ni almacenamiento de datos de tarjetas).
+2. **Arranque en Frío (Render Free Tier):** El backend desplegado en Render puede demorar entre 30 y 50 segundos en responder la primera solicitud tras un período de inactividad.
+3. **Envío de Correos:** Por defecto opera con `ConsoleEmailBackend` y persistencia auditable en `RegistroNotificacion`, permitiendo reintentos manuales desde el panel administrativo (`/admin/notificaciones`) si no se configura un servidor SMTP externo.
+4. **Cuentas Suspendidas:** La suspensión de cuentas opera a nivel de backend validando `is_active=False` al iniciar sesión y en cualquier endpoint protegido (`CuentaActiva`).
 
 ---
 
