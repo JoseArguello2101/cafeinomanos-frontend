@@ -12,7 +12,7 @@
 | **Patricio Chaug** | **Scrum Master (SM)** & Desarrollador Frontend | Gestión Ágil & Frontend | Coordinación de ceremonias ágiles, organización de sprints, tablero de tareas, desarrollo de componentes e interfaz en React + Vite. |
 | **Javiera Fuentealba** | Desarrolladora Backend | Backend & Bases de Datos | Configuración del entorno Django, endpoints de autenticación por Token, conexión y modelos en PostgreSQL y MongoDB Atlas, e investigación de pasarela de pago en modo Sandbox. |
 | **Brandon Valdés** | Desarrollador Backend | Backend & API REST | Desarrollo de endpoints RESTful, validación de datos, control de lógica de negocio y gestión de usuarios. |
-| **Gabriel Moreno** | Desarrollador Backend | Backend & Seguridad | Implementación de validaciones de seguridad, endpoints de salud/diagnóstico de BD, manejo de estados y sesiones. |
+| **Gabriel Moreno** | **QA & Desarrollador Backend** | QA, Backend & Seguridad | Aseguramiento de calidad (QA), validaciones de seguridad, endpoints de salud/diagnóstico de BD, manejo de estados, sesiones y despliegue del backend. |
 | **Cristóbal Garrido** | Diseñador UI/UX & Desarrollador Frontend | Diseño & Frontend | Identidad corporativa, wireframes y bocetos navegables (Sprint 1), diseño de paletas temáticas y maquetación de vistas en React. |
 | **José Argüello** | Desarrollador Frontend | Frontend & Integración | Implementación de vistas navegables, enrutamiento con React Router DOM, integración de componentes y consumo de la API. |
 
@@ -37,6 +37,12 @@
   * Gestión de usuarios (`/api/users/`, `/api/users/<id>/`).
   * Interfaz Frontend moderna con **React 19** y **Vite**.
   * **Investigación Técnica de Pasarela de Pagos Sandbox** ([backend/docs/2_investigacion_pasarela_pago_sandbox.md](backend/docs/2_investigacion_pasarela_pago_sandbox.md)).
+* **Entrega Final (Catálogo, Carrito, Checkout, Reservas, Calidad y Despliegue):**
+  * Catálogo público paginado, página de detalle con galería interactiva de múltiples imágenes (4 a 6) e imagen alternativa de respaldo.
+  * Carrito anónimo con token firmado y combinación sin descarte silencioso al iniciar sesión (`POST /api/carrito/combinar/`), con retorno automático al carrito.
+  * Registro y activación de cuentas mediante enlace de un solo uso con hash SHA-256 (`/api/activacion/confirmar/`).
+  * Flujo de compra con reserva indivisible de stock (vigencia de 15 minutos), liberación segura e idempotente de reservas, pasarela Sandbox Webpay Plus, consolidación de `MovimientoInventario` y consulta segura del resumen de la orden.
+  * Conciliación idempotente de operaciones interrumpidas, panel administrativo de incidencias y reintento de notificaciones, cobertura de pruebas del **93 %** en módulos críticos y despliegue productivo en **Vercel** y **Render**.
 
 ### 2.3 Mejoras Opcionales (Roadmap Futuro)
 - [x] **Investigación de pasarela de pago en modo Sandbox:** Análisis de Transbank Webpay Plus, Mercado Pago y Stripe con guía de integración Django + DRF ([Documento Técnico](backend/docs/2_investigacion_pasarela_pago_sandbox.md)).
@@ -241,9 +247,25 @@ MONGODB_URI=mongodb+srv://<usuario>:<password>@cluster0.xxxx.mongodb.net/?retryW
 MONGODB_DB_NAME=paraiso_cafe_nosql
 
 # ==============================================================================
-# 3. POLÍTICA DE ORÍGENES CRUZADOS (CORS)
+# 3. POLÍTICA DE ORÍGENES CRUZADOS (CORS) Y DESPLIEGUE
 # ==============================================================================
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000
+FRONTEND_URL=http://localhost:5173
+WEBPAY_RETURN_URL=http://localhost:5173/confirmacion
+VIGENCIA_ACTIVACION_HORAS=24
+
+# ==============================================================================
+# 4. PRIMER ADMINISTRADOR AUTOMÁTICO EN DESPLIEGUE (Opcional para build.sh)
+# ==============================================================================
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@paraisocafe.cl
+ADMIN_PASSWORD=cambiar_por_contrasena_segura
+```
+
+Para el **Frontend** (`frontend/.env`, basado en `frontend/.env.example`):
+
+```env
+VITE_API_URL=http://localhost:8000/api
 ```
 
 >Nunca comparta contraseñas ni cadenas URI de MongoDB en repositorios públicos. El archivo `.env` se encuentra explícitamente excluido mediante el `.gitignore`.
@@ -285,14 +307,26 @@ Los usuarios estándar pueden registrarse mediante el endpoint seguro de la API:
 
 ## 8. Pruebas, Reportes, Estados, Reservas e Idempotencia
 
-### 8.1 Ejecución de Pruebas Automatizadas
-* **Backend:**
+### 8.1 Ejecución de Pruebas Automatizadas y Cobertura (RNF-14)
+* **Backend (Suite completa):**
   ```powershell
   python manage.py test api
   ```
-* **Frontend (Linting de sintaxis y buenas prácticas):**
+* **Backend (Medición de cobertura excluyendo `venv/`, `migrations/`, `config/` y tests vía `.coveragerc`):**
+  ```powershell
+  coverage run --rcfile=.coveragerc manage.py test api.test_auth api.test_seguridad api.test_activacion api.test_reserva_indivisible api.test_liberacion_reservas api.test_confirmacion_orden api.test_conciliacion api.test_recuperacion_operaciones api.test_checkout api.test_resumen_orden api.test_carrito_combinar api.test_cobertura_modulos_criticos
+  coverage report --rcfile=.coveragerc --include="*/api/permissions.py,*/api/auth_views.py,*/api/servicio_activacion.py,*/api/colecciones_mongodb/reservas.py,*/api/servicio_confirmacion.py,*/api/servicio_pasarela.py,*/api/servicio_conciliacion.py,*/api/checkout_views.py"
+  ```
+  * **Cobertura alcanzada en módulos críticos (autorización, reserva y confirmación):** **`93 %`** (superando el umbral mínimo del `80 %` exigido por RNF-14).
+* **Reportes técnicos guardados en el repositorio Backend (`docs/`):**
+  * `docs/informe_cobertura_pruebas.md` — Cobertura de pruebas por módulo crítico (`93 %`).
+  * `docs/informe_pruebas_recuperacion.md` — Evidencia de recuperación ante fallos e idempotencia (HU-14 / RNF-10).
+  * `docs/informe_carga_catalogo.md` — Pruebas de carga del catálogo (RNF-02 / RNF-03).
+  * `docs/reporte_seguridad.md` y `docs/despliegue_y_limitaciones.md` — Auditoría de seguridad y despliegue.
+* **Frontend (Linting y compilación):**
   ```bash
   npm run lint
+  npm run build
   ```
 
 ### 8.2 Endpoint de Diagnóstico y Salud (`/api/db-status/`)
@@ -331,10 +365,13 @@ Permite comprobar el estado de ambas bases de datos sin requerir inicio de sesi�
 | `403 FORBIDDEN` | Acceso denegado | Intento de login en cuenta con `is_active: false` (cuenta suspendida). |
 | `404 NOT FOUND` | No encontrado | Usuario u objeto inexistente para edición o consulta. |
 
-### 8.4 Idempotencia y Concurrencia
-* **Registro de Usuarios:** Idempotente frente a reintentos; si el correo ya existe, retorna `400 Bad Request` indicando que el registro ya fue procesado, impidiendo duplicidad de cuentas.
-* **Actualización Parcial (`PATCH /api/users/<id>/`):** Las modificaciones aplican solo a los campos provistos, manteniendo la consistencia de los datos ante ejecuciones múltiples repetidas.
-* **Diseño para Pagos y Reservas:** En la arquitectura de pagos (Sprint 2/3), se emplea un identificador único de transacción (`idempotency_key` o `order_id`) para evitar cobros duplicados en caso de reintentos por caída de red.
+### 8.4 Reservas de Stock, Estados e Idempotencia
+* **Registro de Usuarios y Activación:** Idempotente frente a reintentos; el correo se valida como único y los enlaces de activación se almacenan con hash SHA-256 para un único consumo atómico (`consumir_solicitud`).
+* **Reserva Indivisible y Liberación Segura (`reservas_stock`):** Al reservar líneas de una orden se incrementa únicamente `stock_reservado` (vigencia de **15 minutos**) sin alterar `stock_fisico`. Ante pago rechazado, cancelado o vencido (siempre verificando antes el estado del pago), la liberación reduce solo `stock_reservado` de forma **idempotente** y nunca libera reservas ya consolidadas.
+* **Idempotencia en Checkout, Pagos y Conciliación:**
+  * `POST /api/pedidos/` acepta `operacion_id` o cabecera `Idempotency-Key` para devolver la misma orden ante reintentos o doble clic sin duplicar descuentos de stock.
+  * `POST /api/pedidos/<id>/pago/iniciar/` reutiliza intentos `INICIADO` activos, y `POST /api/pedidos/<id>/pago/retorno/` es idempotente ante confirmaciones repetidas.
+  * La conciliación (`/api/admin/conciliacion/`) recupera órdenes interrumpidas (`PENDIENTE`, `CONFIRMACION_PENDIENTE`, `REVISION_REQUERIDA`) y no duplica efectos al ejecutarse repetidamente.
 
 ### 8.5 Contratos del Flujo de Compra (Checkout, Orden, Reserva y Pago — HU-18 / RNF-05)
 
@@ -566,15 +603,15 @@ sequenceDiagram
 
 ## 9. URLs, Plataformas, Cuotas y Persistencia
 
-### 9.1 Tabla de URLs del Proyecto
-| Servicio / Módulo | URL Local | Descripción |
-|---|---|---|
-| **Frontend Web** | `http://localhost:5173/` | Aplicación SPA principal en React. |
-| **API Backend** | `http://localhost:8000/api/` | Raíz de servicios RESTful. |
-| **Test Endpoint** | `http://localhost:8000/api/test/` | Comprobación rápida de respuesta backend. |
-| **Diagnóstico DB** | `http://localhost:8000/api/db-status/` | Chequeo de conexión PostgreSQL y MongoDB. |
-| **Panel Admin** | `http://localhost:8000/admin/` | Panel de gestión administrativa de Django. |
-| **Bocetos Sprint 1** | `http://localhost:5175/` | Presentación estática de temas e identidad. |
+### 9.1 Tabla de URLs del Proyecto (Local y Despliegue)
+| Servicio / Módulo | URL Local | URL de Producción (Despliegue) | Descripción |
+|---|---|---|---|
+| **Frontend Web (Vercel)** | `http://localhost:5173/` | `https://cafeinomanos.vercel.app/` | Aplicación SPA principal en React + Vite. |
+| **API Backend (Render)** | `http://localhost:8000/api/` | `https://dwebs03backendcafein-manos.onrender.com/api/` | Raíz de servicios RESTful en Django REST Framework. |
+| **Diagnóstico DB** | `http://localhost:8000/api/db-status/` | `https://dwebs03backendcafein-manos.onrender.com/api/db-status/` | Chequeo de conexión PostgreSQL/SQLite y MongoDB Atlas. |
+| **Test Endpoint** | `http://localhost:8000/api/test/` | `https://dwebs03backendcafein-manos.onrender.com/api/test/` | Comprobación rápida de respuesta backend. |
+| **Panel Admin Django** | `http://localhost:8000/admin/` | `https://dwebs03backendcafein-manos.onrender.com/admin/` | Panel de gestión administrativa de Django. |
+| **Bocetos Sprint 1** | `http://localhost:5175/` | — | Presentación estática de temas e identidad. |
 
 ### 9.2 Plataformas de Despliegue Sugeridas
 * **Frontend:** Vercel o Netlify (despliegue continuo desde rama `main`).
@@ -635,8 +672,10 @@ mongorestore --uri="<TU_MONGODB_URI>" ./backup_mongo/
   * `refactor: ...` Reestructuración de código sin alterar su comportamiento externo.
 
 ### 11.2 Limitaciones Conocidas
-1. **Pasarela de Pagos:** En el Sprint actual la pasarela de pagos se encuentra en modalidad mock (wireframe navegable y validación de formulario, sin cargo bancario real en línea).
-2. **Cuentas Suspendidas:** La suspensión de cuentas opera a nivel de backend validando `is_active=False` al momento de iniciar sesión y en la modificación mediante el endpoint `PATCH /api/users/<id>/`.
+1. **Pasarela de Pagos Sandbox:** La integración con Webpay Plus opera en modo Sandbox controlado por el backend (sin cobros bancarios reales ni almacenamiento de datos de tarjetas).
+2. **Arranque en Frío (Render Free Tier):** El backend desplegado en Render puede demorar entre 30 y 50 segundos en responder la primera solicitud tras un período de inactividad.
+3. **Envío de Correos:** Por defecto opera con `ConsoleEmailBackend` y persistencia auditable en `RegistroNotificacion`, permitiendo reintentos manuales desde el panel administrativo (`/admin/notificaciones`) si no se configura un servidor SMTP externo.
+4. **Cuentas Suspendidas:** La suspensión de cuentas opera a nivel de backend validando `is_active=False` al iniciar sesión y en cualquier endpoint protegido (`CuentaActiva`).
 
 ---
 
