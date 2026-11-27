@@ -84,11 +84,24 @@ export function imagenPorProducto(producto) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+  const cat = normalizarTexto(producto?.categoria)
+
+  if (cat === 'reposteria') {
+    if (/croissant|pain|roll|medialuna|berlines|palmerita|scone/.test(texto)) return '/productos/croissant_panaderia.jpg'
+    if (/tarta|pie|kuchen|tartaleta|strudel|macarons|eclair|tiramisu/.test(texto)) return '/productos/pie_tarta.jpg'
+    return '/productos/torta_pastel.jpg'
+  }
+  if (cat === 'accesorios') {
+    return '/productos/molinillo_tazas.jpg'
+  }
+  if (/grano|molido|blend|colombia|brasil|guatemala|costa rica|peru|kenya|sumatra|descafeinado|salvador|honduras|ruanda|panama|etiopia/.test(texto)) {
+    return '/productos/cafe_grano.jpg'
+  }
+  if (/cold brew|iced|frappe|tonic|nitro|carajillo/.test(texto)) return '/productos/cafe_frio.jpg'
   if (texto.includes('capuccino') || texto.includes('cappuccino')) return capuccino
   if (texto.includes('mocha')) return mocha
   if (texto.includes('macchiato')) return macchiato
-  // Un producto nuevo no debe "convertirse" en Capuccino: si no hay imagen
-  // propia o falla su enlace, se muestra el neutro "Imagen no disponible".
+  if (cat === 'cafe' || cat === 'cafes de especialidad') return capuccino
   return imagenRespaldo
 }
 
