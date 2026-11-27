@@ -59,7 +59,7 @@
   background: var(--nav-bg);
   color: var(--nav-texto);
   font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
 }
 
@@ -196,17 +196,9 @@
   line-height: 1;
 }
 
-.site-shell .nav-centro a {
-  font-size: 1.35rem;
-  font-weight: 800;
-  padding: 6px 14px;
-  letter-spacing: 0.2px;
-}
-
+.site-shell .nav-centro a,
 .site-shell .nav-izquierda a {
-  font-size: 1.15rem;
-  font-weight: 800;
-  padding: 8px 18px;
+  padding: 8px 14px;
   border-radius: 999px;
 }
 
@@ -331,8 +323,25 @@
 }
 
 @media (min-width: 1150px) {
+  /* el navbar ocupa todo el ancho de la pantalla: logo a la izquierda,
+     enlaces al centro y botones a la derecha */
   .site-shell .site-nav {
     flex-wrap: nowrap;
-    justify-content: space-between;
+    justify-content: flex-start;
+    gap: 0;
+    margin-inline: calc(50% - 50vw);
+    padding-inline: 32px;
+  }
+
+  .site-shell .nav-izquierda {
+    margin-left: auto;
+  }
+
+  .site-shell .nav-centro {
+    margin-left: 4px;
+  }
+
+  .site-shell .nav-derecha {
+    margin-left: auto;
   }
 }

@@ -1,5 +1,5 @@
 *, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: #ffffff; color: #38271e; font-family: 'Trebuchet MS', 'Segoe UI', sans-serif; }
+body { margin: 0; overflow-x: clip; background: #ffffff; color: #38271e; font-family: 'Trebuchet MS', 'Segoe UI', sans-serif; }
 #root { max-width: 1126px; margin: 0 auto; min-height: 100vh; }
 
 /* Tokens de tema y estilos base del contenedor de la tienda. */
