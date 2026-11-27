@@ -63,14 +63,15 @@ function PagoRetorno() {
         setResultado('confirmada')
       })
       .catch(problema => {
-        if (problema.status >= 400 && problema.status < 500) {
+        // 409: la pasarela aún no da por terminado el pago; se puede volver a verificar.
+        if (problema.status >= 400 && problema.status < 500 && problema.status !== 409) {
           // El backend respondió con un rechazo (pago rechazado, monto o pedido que no coinciden…).
           setMensaje(problema.message)
           setResultado('rechazada')
           borrarIntentoPago()
         } else {
-          // Sin conexión o error interno del servidor (5xx): no es un rechazo del pago,
-          // así que se mantiene "Verificando" con opción de reintentar.
+          // Sin conexión, pasarela no disponible (5xx) o pago aún en curso (409):
+          // no es un rechazo del pago, así que se mantiene "Verificando" con opción de reintentar.
           setMensaje(problema.message)
           setResultado('error')
         }
@@ -103,6 +104,9 @@ function PagoRetorno() {
     panel = { estado: 'rechazada', titulo: 'Pago rechazado', descripcion: `${mensaje} No se realizó ningún cobro.`, acciones: ['pedido', 'carrito', 'contacto'] }
   } else if (resultado === 'error') {
     panel = { estado: 'verificando', titulo: 'No pudimos terminar la verificación', descripcion: `${mensaje} Tu pago no se pierde: vuelve a intentarlo.`, acciones: ['reintentar', 'pedido'] }
+  } else if (resultado === 'anulado' && tokenAnulado === 'tiempo-agotado') {
+    // Transbank devolvió al cliente porque se acabó el tiempo del formulario de pago
+    panel = { estado: 'rechazada', ...RESULTADOS.anulado, titulo: 'Tiempo de pago agotado', descripcion: 'Se acabó el tiempo para completar el pago en Webpay. No se realizó ningún cobro; puedes intentarlo de nuevo desde tu pedido.' }
   } else if (resultado === 'anulado') {
     panel = { estado: 'rechazada', ...RESULTADOS.anulado }
   } else {
