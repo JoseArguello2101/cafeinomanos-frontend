@@ -109,7 +109,7 @@ function App() {
           <Route path="*" element={<NoEncontrada />} />
         </Routes>
       </main>
-      <Footer />
+      <Footer tema={tema} />
     </div>
     </ContenidosContext.Provider>
     </ProductosContext.Provider>
