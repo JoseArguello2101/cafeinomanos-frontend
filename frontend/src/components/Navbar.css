@@ -39,7 +39,8 @@
   --nav-bg: #f7e6ef;
   --nav-texto: #5b4a6b;
   --nav-borde: #8e6fa0;
-  --nav-acento: #8e6fa0;
+  /* más oscuro que el borde: el texto blanco del botón "Registrar" necesita contraste 4.5:1 (5.6:1) */
+  --nav-acento: #7a5c8c;
   --nav-acento-texto: #ffffff;
   --nav-hover: rgba(142, 111, 160, 0.1);
   --nav-menu-bg: #fdf4f8;
@@ -233,6 +234,8 @@
   font: inherit;
   font-weight: 700;
   text-align: left;
+  /* "Tema del sitio (Vintage)" en una sola línea */
+  white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s;
 }

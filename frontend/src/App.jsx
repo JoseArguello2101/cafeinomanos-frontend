@@ -29,17 +29,43 @@ import { ProductosContext } from './productos'
 import { ContenidosContext } from './contenidos'
 import { EVENTO_PRODUCTOS, listarProductos } from './services/productos'
 import { contenidosIniciales, listarContenidos } from './services/contenidos'
+import {
+  guardarPreferencia, leerPreferencia, leerTemaSitioGuardado, obtenerTemaSitio, recordarTemaSitio,
+} from './services/tema'
+import AdminApariencia from './pages/AdminApariencia'
 
 function App() {
   const [productos, setProductos] = useState([])
   const [cargandoProductos, setCargandoProductos] = useState(true)
   const [errorProductos, setErrorProductos] = useState('')
   const [revisionProductos, setRevisionProductos] = useState(0)
-  const [tema, setTema] = useState(() => {
-    const guardado = localStorage.getItem('tema')
-    return ['claro', 'oscuro', 'vintage', 'pastel'].includes(guardado) ? guardado : 'claro'
-  })
-  useEffect(() => { localStorage.setItem('tema', tema) }, [tema])
+  // Tema global que elige la administración (se guarda en el backend y lo ven todos los visitantes).
+  const [temaSitio, setTemaSitio] = useState(leerTemaSitioGuardado)
+  // Tema personal opcional elegido en el navbar: solo vale en este navegador y gana sobre el del sitio.
+  const [preferencia, setPreferencia] = useState(leerPreferencia)
+  const tema = preferencia || temaSitio
+
+  useEffect(() => {
+    const controlador = new AbortController()
+    obtenerTemaSitio(controlador.signal)
+      .then(valor => { setTemaSitio(valor); recordarTemaSitio(valor) })
+      // si el backend no responde se mantiene el último tema conocido
+      .catch(() => {})
+    return () => controlador.abort()
+  }, [])
+
+  // null vuelve a seguir el tema del sitio
+  function cambiarPreferencia(valor) {
+    setPreferencia(valor)
+    guardarPreferencia(valor)
+  }
+
+  // la página de apariencia avisa cuando el administrador guarda un tema nuevo
+  function cambiarTemaSitio(valor) {
+    setTemaSitio(valor)
+    recordarTemaSitio(valor)
+  }
+
   useEffect(() => {
     const controlador = new AbortController()
     listarProductos(controlador.signal)
@@ -77,7 +103,7 @@ function App() {
     <ContenidosContext.Provider value={{ contenidos, error: errorContenidos, recargar: () => { setRevisionContenidos(actual => actual + 1) } }}>
     <div className="store site-shell admin-shell" data-theme={tema}>
             <a href="#contenido" className="saltar-contenido">Saltar al contenido</a>
-      <Navbar tema={tema} onTemaChange={setTema} />
+      <Navbar temaSitio={temaSitio} preferencia={preferencia} onPreferenciaChange={cambiarPreferencia} />
       <main id="contenido" tabIndex="-1" className={panel || pathname === '/' ? undefined : 'site-page'}>
         <Routes>
           <Route path="/" element={<Inicio />} />
@@ -104,6 +130,9 @@ function App() {
           <Route path="/admin/contenidos" element={<RutaAdmin><AdminContenidos key={pathname} tema={tema} /></RutaAdmin>} />
           <Route path="/demo/admin/contenidos" element={<AdminContenidos key={pathname} demo tema={tema} />} />
           <Route path="/admin/importar" element={<RutaAdmin><AdminImportar tema={tema} /></RutaAdmin>} />
+          {/* Tema global del sitio: solo administradores, más su versión demo (no guarda en el backend). */}
+          <Route path="/admin/apariencia" element={<RutaAdmin><AdminApariencia key={pathname} tema={tema} temaSitio={temaSitio} preferencia={preferencia} onTemaSitioChange={cambiarTemaSitio} onPreferenciaChange={cambiarPreferencia} /></RutaAdmin>} />
+          <Route path="/demo/admin/apariencia" element={<AdminApariencia key={pathname} demo tema={tema} temaSitio={temaSitio} preferencia={preferencia} onTemaSitioChange={() => {}} onPreferenciaChange={cambiarPreferencia} />} />
           {/* Panel de incidencias de compra: solo administradores (RutaAdmin) y su versión demo con datos de ejemplo. */}
           <Route path="/admin/incidencias" element={<RutaAdmin><AdminIncidencias key={pathname} tema={tema} /></RutaAdmin>} />
           <Route path="/demo/admin/incidencias" element={<AdminIncidencias key={pathname} demo tema={tema} />} />
