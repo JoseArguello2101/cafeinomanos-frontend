@@ -2,16 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
 import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
+import { TEMAS, nombreTema } from '../services/tema'
 import './Navbar.css'
 
-const TEMAS = [
-  { valor: 'claro', nombre: 'Claro' },
-  { valor: 'oscuro', nombre: 'Oscuro' },
-  { valor: 'vintage', nombre: 'Vintage' },
-  { valor: 'pastel', nombre: 'Pastel' },
-]
-
-function Navbar({ tema, onTemaChange }) {
+// temaSitio: el que eligió la administración; preferencia: el personal de este navegador (o null).
+function Navbar({ temaSitio, preferencia, onPreferenciaChange }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const retornoCompra = pathname === '/carrito' || pathname === '/pago' ? '/carrito' : undefined
@@ -65,8 +60,9 @@ function Navbar({ tema, onTemaChange }) {
     }
   }, [])
 
+  // valor null = volver al tema del sitio
   function elegirTema(valor) {
-    onTemaChange(valor)
+    onPreferenciaChange(valor)
     setTemasAbierto(false)
   }
 
@@ -148,13 +144,26 @@ function Navbar({ tema, onTemaChange }) {
           </button>
           {temasAbierto && (
             <ul className="nav-temas-lista" role="menu">
+              {/* Primera opción: seguir el tema que eligió la administración */}
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={!preferencia}
+                  className={!preferencia ? 'activo' : undefined}
+                  onClick={() => elegirTema(null)}
+                >
+                  Tema del sitio ({nombreTema(temaSitio)})
+                </button>
+              </li>
+              {/* Resto: tema personal, guardado solo en este navegador */}
               {TEMAS.map(opcion => (
                 <li key={opcion.valor} role="none">
                   <button
                     type="button"
                     role="menuitemradio"
-                    aria-checked={tema === opcion.valor}
-                    className={tema === opcion.valor ? 'activo' : undefined}
+                    aria-checked={preferencia === opcion.valor}
+                    className={preferencia === opcion.valor ? 'activo' : undefined}
                     onClick={() => elegirTema(opcion.valor)}
                   >
                     {opcion.nombre}
