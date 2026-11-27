@@ -614,7 +614,9 @@ sequenceDiagram
 | **Bocetos Sprint 1** | `http://localhost:5175/` | — | Presentación estática de temas e identidad. |
 
 ### 9.2 Plataformas de Despliegue Sugeridas
-* **Frontend:** Vercel o Netlify (despliegue continuo desde rama `main`).
+* **Frontend:** Vercel, conectado al repositorio `JoseArguello2101/cafeinomanos-frontend`. Cada push o merge a `master` se publica solo en `https://cafeinomanos.vercel.app/` (en Vercel el Root Directory es `frontend`).
+  * La variable `VITE_API_URL` está configurada en Vercel (Settings → Environment Variables) con la URL del backend terminada en `/api`. Si se cambia, hay que volver a desplegar desde la pestaña Deployments.
+  * El archivo `frontend/vercel.json` envía todas las rutas a `index.html`, así recargar `/catalogo` u otra página no da 404.
 * **Backend:** Render o Railway (entorno Linux con Gunicorn / Uvicorn).
 * **Bases de Datos:**
   * **PostgreSQL:** Neon / Supabase / Render PostgreSQL.
