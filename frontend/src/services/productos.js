@@ -1,16 +1,26 @@
 import { solicitar } from '../api'
-import { categoriaCanonica, esImagenDeRedLocal, imagenRespaldo } from '../productos'
+import { categoriaCanonica, esImagenDeRedLocal, imagenPorProducto } from '../productos'
 
 /** Avisa a la aplicación que el inventario cambió tras un pedido. */
 export const EVENTO_PRODUCTOS = 'productos:actualizados'
 
 // Convierte la lista de imágenes del backend (strings u objetos { url } / { imagen_url })
 // en un arreglo de URLs únicas, incluyendo la imagen principal en primer lugar.
+function normalizarUrlCatalogo(url) {
+  const limpio = String(url || '').trim()
+  if (!limpio) return ''
+  // si apunta a localhost/127.0.0.1 /media/productos/, usar la copia estatica en /productos/
+  const matchLocal = limpio.match(/^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?\/media\/productos\/([^/?#]+)$/i)
+  if (matchLocal) return `/productos/${matchLocal[1]}`
+  if (limpio.startsWith('/media/productos/')) return limpio.replace('/media/productos/', '/productos/')
+  return limpio
+}
+
 function normalizarImagenes(producto) {
   const extras = Array.isArray(producto?.imagenes) ? producto.imagenes : []
   const urls = [producto?.imagen_url, ...extras, producto?.imagen]
     .map(item => (typeof item === 'string' ? item : item?.url || item?.imagen_url || item?.imagen || ''))
-    .map(url => String(url || '').trim())
+    .map(normalizarUrlCatalogo)
     // se descartan las imágenes de la red local cuando el sitio está publicado (ver esImagenDeRedLocal)
     .filter(url => url && !esImagenDeRedLocal(url))
   return [...new Set(urls)]
@@ -19,6 +29,7 @@ function normalizarImagenes(producto) {
 export function normalizarProducto(producto) {
   const imagenes = normalizarImagenes(producto)
   const principal = imagenes[0] || ''
+  const respaldo = imagenPorProducto(producto)
   return {
     id: String(producto?.id ?? producto?.identificador ?? ''),
     nombre: producto?.nombre || '',
@@ -26,8 +37,8 @@ export function normalizarProducto(producto) {
     categoria: categoriaCanonica(producto?.categoria),
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
-    imagen: principal || imagenRespaldo,
-    imagenes: imagenes.length ? imagenes : [imagenRespaldo],
+    imagen: principal || respaldo,
+    imagenes: imagenes.length ? imagenes : [respaldo],
     moneda: producto?.moneda || 'CLP',
     stock_reservado: Number(producto?.stock_reservado) || 0,
     estado: producto?.estado || '',
