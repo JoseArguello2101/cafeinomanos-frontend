@@ -6,7 +6,7 @@ const CLAVE_INTENTO_PAGO = 'intento_pago'
 /**
  * Pide al backend crear (o recuperar) el intento de pago de prueba de un pedido.
  * El monto y la moneda los calcula el backend; el front solo envía el id del pedido.
- * Devuelve { pedidoId, token, url, monto, moneda, reutilizado }.
+ * Devuelve { pedidoId, token, url, modo, monto, moneda, reutilizado }.
  */
 export async function iniciarPago(pedidoId) {
   const resultado = await solicitar(`/pedidos/${encodeURIComponent(pedidoId)}/pago/iniciar/`, {
@@ -18,6 +18,8 @@ export async function iniciarPago(pedidoId) {
     pedidoId,
     token: resultado.token,
     url: resultado.url,
+    // 'transbank' (Webpay real de integración) o 'simulada' (pasarela de prueba local)
+    modo: resultado.modo || 'simulada',
     monto: Number(resultado.monto) || 0,
     moneda: resultado.moneda || 'CLP',
     reutilizado: Boolean(resultado.reutilizado),
