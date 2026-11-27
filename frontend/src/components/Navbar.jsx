@@ -2,28 +2,24 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
 import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
-<<<<<<< HEAD
 import logoCafe from '../assets/logo-cafe.png'
 import logoBlanco from '../assets/logo-blanco.png'
-import { TEMAS, nombreTema } from '../services/tema'
+import { TEMAS, guardarTemaSitio, nombreTema } from '../services/tema'
 import './Navbar.css'
 
 // tema: el que se ve (para el logo); temaSitio: el que eligió la administración;
 // preferencia: el personal de este navegador (o null).
-function Navbar({ tema, temaSitio, preferencia, onPreferenciaChange }) {
-=======
-import { TEMAS, nombreTema } from '../services/tema'
-import './Navbar.css'
-
-// temaSitio: el que eligió la administración; preferencia: el personal de este navegador (o null).
-function Navbar({ temaSitio, preferencia, onPreferenciaChange }) {
->>>>>>> origin/master
+function Navbar({ tema, temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const retornoCompra = pathname === '/carrito' || pathname === '/pago' ? '/carrito' : undefined
   const usuario = JSON.parse(localStorage.getItem('usuario'))
+  // un administrador real (no la demo) cambia con este menú el tema predeterminado de todo el sitio
+  const esAdmin = Boolean(usuario?.es_admin && !usuario?.demo && localStorage.getItem('token'))
   const [unidadesCarrito, setUnidadesCarrito] = useState(0)
   const [temasAbierto, setTemasAbierto] = useState(false)
+  const [guardandoTema, setGuardandoTema] = useState(false)
+  const [errorTema, setErrorTema] = useState('')
   const temasRef = useRef(null)
 
   useEffect(() => {
@@ -71,10 +67,28 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange }) {
     }
   }, [])
 
-  // valor null = volver al tema del sitio
+  // Visitante: valor = tema personal solo en este navegador (null = volver al tema del sitio).
   function elegirTema(valor) {
     onPreferenciaChange(valor)
     setTemasAbierto(false)
+  }
+
+  // Administrador: guarda el tema en el servidor como predeterminado para todos; se mantiene
+  // aunque cierre sesión. Se quita su tema personal para que vea el mismo que los visitantes.
+  async function elegirTemaSitio(valor) {
+    if (guardandoTema) return
+    setGuardandoTema(true)
+    setErrorTema('')
+    try {
+      const guardado = await guardarTemaSitio(valor)
+      onTemaSitioChange(guardado)
+      onPreferenciaChange(null)
+      setTemasAbierto(false)
+    } catch (problema) {
+      setErrorTema(problema.message || 'No se pudo guardar el tema.')
+    } finally {
+      setGuardandoTema(false)
+    }
   }
 
   async function cerrarSesion() {
@@ -150,7 +164,29 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange }) {
           >
             Temas <span aria-hidden="true">▾</span>
           </button>
-          {temasAbierto && (
+          {temasAbierto && esAdmin && (
+            <ul className="nav-temas-lista" role="menu" aria-label="Tema predeterminado del sitio">
+              {/* Administrador: el tema elegido queda como predeterminado para todos los visitantes */}
+              <li role="none" className="nav-temas-titulo">Tema del sitio (para todos)</li>
+              {TEMAS.map(opcion => (
+                <li key={opcion.valor} role="none">
+                  <button
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={temaSitio === opcion.valor}
+                    className={temaSitio === opcion.valor ? 'activo' : undefined}
+                    disabled={guardandoTema}
+                    onClick={() => elegirTemaSitio(opcion.valor)}
+                  >
+                    {opcion.nombre}
+                  </button>
+                </li>
+              ))}
+              {guardandoTema && <li role="none" className="nav-temas-estado" aria-live="polite">Guardando…</li>}
+              {errorTema && <li className="nav-temas-estado" role="alert">{errorTema}</li>}
+            </ul>
+          )}
+          {temasAbierto && !esAdmin && (
             <ul className="nav-temas-lista" role="menu">
               {/* Primera opción: seguir el tema que eligió la administración */}
               <li role="none">
