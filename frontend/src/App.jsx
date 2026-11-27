@@ -103,7 +103,7 @@ function App() {
     <ContenidosContext.Provider value={{ contenidos, error: errorContenidos, recargar: () => { setRevisionContenidos(actual => actual + 1) } }}>
     <div className="store site-shell admin-shell" data-theme={tema}>
             <a href="#contenido" className="saltar-contenido">Saltar al contenido</a>
-      <Navbar temaSitio={temaSitio} preferencia={preferencia} onPreferenciaChange={cambiarPreferencia} />
+      <Navbar temaSitio={temaSitio} preferencia={preferencia} onPreferenciaChange={cambiarPreferencia} onTemaSitioChange={cambiarTemaSitio} />
       <main id="contenido" tabIndex="-1" className={panel || pathname === '/' ? undefined : 'site-page'}>
         <Routes>
           <Route path="/" element={<Inicio />} />
