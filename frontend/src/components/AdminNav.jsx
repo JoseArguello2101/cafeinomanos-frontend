@@ -11,6 +11,8 @@ export default function AdminNav() {
     <NavLink to={`${base}/incidencias`}>Incidencias de compra</NavLink>
     {/* Correos de compra fallidos o inciertos y su reintento */}
     <NavLink to={`${base}/notificaciones`}>Correos</NavLink>
+    {/* Tema global del sitio */}
+    <NavLink to={`${base}/apariencia`}>Apariencia</NavLink>
     {base === '/admin' && <NavLink to="/admin/importar">Importar usuarios</NavLink>}
   </nav>
 }

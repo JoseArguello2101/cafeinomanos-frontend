@@ -116,3 +116,11 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/*
+ * Bootstrap pinta .text-muted con un gris oscuro fijo: en el tema oscuro queda casi invisible (1.07:1).
+ * Dentro de la tienda se usa el gris del tema activo, que cumple 4.5:1 en los cuatro temas.
+ */
+.store .text-muted {
+  color: var(--muted) !important;
+}
