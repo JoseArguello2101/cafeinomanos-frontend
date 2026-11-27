@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
 import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
+<<<<<<< HEAD
 import logoCafe from '../assets/logo-cafe.png'
 import logoBlanco from '../assets/logo-blanco.png'
 import { TEMAS, nombreTema } from '../services/tema'
@@ -10,6 +11,13 @@ import './Navbar.css'
 // tema: el que se ve (para el logo); temaSitio: el que eligió la administración;
 // preferencia: el personal de este navegador (o null).
 function Navbar({ tema, temaSitio, preferencia, onPreferenciaChange }) {
+=======
+import { TEMAS, nombreTema } from '../services/tema'
+import './Navbar.css'
+
+// temaSitio: el que eligió la administración; preferencia: el personal de este navegador (o null).
+function Navbar({ temaSitio, preferencia, onPreferenciaChange }) {
+>>>>>>> origin/master
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const retornoCompra = pathname === '/carrito' || pathname === '/pago' ? '/carrito' : undefined
