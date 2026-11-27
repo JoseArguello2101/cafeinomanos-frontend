@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { pesos, imagenPorProducto } from '../productos'
+import { pesos, imagenPorProducto, imagenSegura } from '../productos'
 import {
   actualizarCantidad,
   eliminarDelCarrito,
@@ -164,7 +164,7 @@ function Carrito() {
             {items.map(item => (
               <li className="compra-item" key={item.id ?? item.producto_id}>
                 <img
-                  src={item.imagen_url}
+                  src={imagenSegura(item.imagen_url, { nombre: item.nombre })}
                   alt={item.nombre}
                   onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto({ nombre: item.nombre }) }}
                 />

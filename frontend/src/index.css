@@ -101,3 +101,18 @@ body { margin: 0; background: #ffffff; color: #38271e; font-family: 'Trebuchet M
   text-transform: uppercase;
   color: var(--muted);
 }
+
+/*
+ * Campos numéricos (cantidad, precio, stock): Firefox muestra siempre las flechas de incremento y
+ * achica el número; Chrome solo las muestra al pasar el mouse. Se ocultan en ambos para que se vean
+ * iguales. El valor se sigue cambiando escribiendo o con las flechas del teclado.
+ */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

@@ -20,6 +20,9 @@ function Pago() {
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
   const token = localStorage.getItem('token')
   const esAdmin = Boolean(usuario?.es_admin)
+  // `usuario` se lee de localStorage en cada render (objeto nuevo cada vez): el efecto depende de este
+  // booleano para no repetir la validación del carrito en cada render.
+  const hayUsuario = Boolean(usuario)
   const [validacion, setValidacion] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [errorCarrito, setErrorCarrito] = useState('')
@@ -39,14 +42,14 @@ function Pago() {
   })
 
   useEffect(() => {
-    if (!token || !usuario || esAdmin) return undefined
+    if (!token || !hayUsuario || esAdmin) return undefined
     const controlador = new AbortController()
     validarCarrito([], controlador.signal)
       .then(setValidacion)
       .catch(problema => { if (problema.name !== 'AbortError') setErrorCarrito(problema.message) })
       .finally(() => { if (!controlador.signal.aborted) setCargando(false) })
     return () => controlador.abort()
-  }, [token, esAdmin, usuario])
+  }, [token, esAdmin, hayUsuario])
 
   if (!token || !usuario) return <Navigate to="/login" replace state={{ desde: '/pago' }} />
   if (esAdmin) {
