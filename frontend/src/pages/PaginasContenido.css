@@ -45,7 +45,8 @@
 
 .datos-contacto dt {
   margin-bottom: 6px;
-  color: var(--muted);
+  /* sobre el fondo --soft el gris --muted no llega a 4.5:1 en claro, vintage y pastel */
+  color: var(--ink);
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -89,7 +90,8 @@
 .seccion-formulario-contacto p {
   margin-bottom: 20px;
   font-size: 14px;
-  color: var(--muted);
+  /* mismo caso que .datos-contacto dt: texto sobre --soft */
+  color: var(--ink);
 }
 
 .campo-grupo {
