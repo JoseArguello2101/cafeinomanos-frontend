@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
 import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
-import { TEMAS, guardarTemaSitio, nombreTema } from '../services/tema'
+import { TEMAS, guardarTemaSitio } from '../services/tema'
 import './Navbar.css'
 
 // temaSitio: el que eligió la administración; preferencia: el personal de este navegador (o null).
@@ -164,56 +164,45 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange
           >
             Temas <span aria-hidden="true">▾</span>
           </button>
-          {temasAbierto && esAdmin && (
-            <ul className="nav-temas-lista" role="menu" aria-label="Tema predeterminado del sitio">
-              {/* Administrador: el tema elegido queda como predeterminado para todos los visitantes */}
-              <li role="none" className="nav-temas-titulo">Tema del sitio (para todos)</li>
-              {TEMAS.map(opcion => (
-                <li key={opcion.valor} role="none">
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={temaSitio === opcion.valor}
-                    className={temaSitio === opcion.valor ? 'activo' : undefined}
-                    disabled={guardandoTema}
-                    onClick={() => elegirTemaSitio(opcion.valor)}
-                  >
-                    {opcion.nombre}
-                  </button>
-                </li>
-              ))}
+          {temasAbierto && (
+            <ul
+              className="nav-temas-lista"
+              role="menu"
+              aria-label={esAdmin ? 'Tema predeterminado del sitio' : 'Tema de la página'}
+            >
+              {/*
+                Los cuatro temas. El que eligió la administración lleva "(Predeterminado)".
+                - Administrador: elegir uno lo guarda como predeterminado para todos.
+                - Visitante: elegir uno lo usa solo en su navegador; elegir el predeterminado
+                  vuelve a seguir el tema del sitio (quita su tema personal).
+              */}
+              {TEMAS.map(opcion => {
+                const predeterminado = temaSitio === opcion.valor
+                const elegido = esAdmin ? predeterminado : (preferencia || temaSitio) === opcion.valor
+                return (
+                  <li key={opcion.valor} role="none">
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={elegido}
+                      className={elegido ? 'activo' : undefined}
+                      disabled={esAdmin && guardandoTema}
+                      onClick={() => {
+                        if (esAdmin) elegirTemaSitio(opcion.valor)
+                        else elegirTema(predeterminado ? null : opcion.valor)
+                      }}
+                    >
+                      <span className="nav-tema-nombre">
+                        {opcion.nombre}{predeterminado && ' (Predeterminado)'}
+                      </span>
+                      {/* círculo con la paleta del tema: fondo y color de acento */}
+                      <span className={`nav-tema-paleta nav-tema-paleta--${opcion.valor}`} aria-hidden="true" />
+                    </button>
+                  </li>
+                )
+              })}
               {guardandoTema && <li role="none" className="nav-temas-estado" aria-live="polite">Guardando…</li>}
               {errorTema && <li className="nav-temas-estado" role="alert">{errorTema}</li>}
-            </ul>
-          )}
-          {temasAbierto && !esAdmin && (
-            <ul className="nav-temas-lista" role="menu">
-              {/* Primera opción: seguir el tema que eligió la administración */}
-              <li role="none">
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={!preferencia}
-                  className={!preferencia ? 'activo' : undefined}
-                  onClick={() => elegirTema(null)}
-                >
-                  Tema del sitio ({nombreTema(temaSitio)})
-                </button>
-              </li>
-              {/* Resto: tema personal, guardado solo en este navegador */}
-              {TEMAS.map(opcion => (
-                <li key={opcion.valor} role="none">
-                  <button
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={preferencia === opcion.valor}
-                    className={preferencia === opcion.valor ? 'activo' : undefined}
-                    onClick={() => elegirTema(opcion.valor)}
-                  >
-                    {opcion.nombre}
-                  </button>
-                </li>
-              ))}
             </ul>
           )}
         </div>
