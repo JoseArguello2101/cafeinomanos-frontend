@@ -221,6 +221,24 @@
   margin: 0;
 }
 
+/* Menú del administrador: título que aclara que el tema es para todos, y estado del guardado */
+.site-shell .nav-temas-lista .nav-temas-titulo,
+.site-shell .nav-temas-lista .nav-temas-estado {
+  padding: 6px 14px;
+  color: var(--nav-texto);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.site-shell .nav-temas-lista .nav-temas-titulo {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.site-shell .nav-temas-lista button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 .site-shell .nav-temas-lista button {
   display: flex;
   align-items: center;
