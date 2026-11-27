@@ -67,7 +67,11 @@ function App() {
   }, [revisionContenidos])
 
   const { pathname, search } = useLocation()
-  const panel = pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/demo/admin')
+  // Al cambiar de página se vuelve arriba: sin esto, la nueva página abría en la posición de
+  // desplazamiento de la anterior (p. ej. el detalle de un producto quedaba a media altura).
+  // `instant` evita la animación del scroll suave que activa Bootstrap: la página nueva aparece ya arriba.
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }) }, [pathname])
+  const panel =pathname === '/admin' || pathname.startsWith('/admin/') || pathname.startsWith('/demo/admin')
   return (
     <ProductosContext.Provider value={{ productos, setProductos, cargando: cargandoProductos, error: errorProductos, recargar: () => { setCargandoProductos(true); setRevisionProductos(actual => actual + 1) } }}>
     <ContenidosContext.Provider value={{ contenidos, error: errorContenidos, recargar: () => { setRevisionContenidos(actual => actual + 1) } }}>

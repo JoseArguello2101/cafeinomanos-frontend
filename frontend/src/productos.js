@@ -56,6 +56,29 @@ export function priorizarProductosIniciales(lista) {
   ]
 }
 
+// Direcciones de la red local (localhost, 127.x, 10.x, 192.168.x, 172.16-31.x).
+const HOSTS_RED_LOCAL = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\]|0\.0\.0\.0|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)$/
+
+/**
+ * Indica si una imagen apunta a la red local mientras el sitio está publicado (p. ej. una imagen
+ * subida con el backend local que quedó guardada como http://127.0.0.1:8000/media/...).
+ * Firefox bloquea esas peticiones y Chrome pide permiso al visitante; además nunca existen en su equipo.
+ * En desarrollo (sitio en localhost) sí se cargan normalmente.
+ */
+export function esImagenDeRedLocal(url) {
+  if (!url || typeof window === 'undefined' || HOSTS_RED_LOCAL.test(window.location.hostname)) return false
+  try {
+    return HOSTS_RED_LOCAL.test(new URL(url, window.location.href).hostname)
+  } catch {
+    return false
+  }
+}
+
+/** Devuelve la URL si el navegador puede cargarla; si apunta a la red local, la imagen de respaldo. */
+export function imagenSegura(url, producto) {
+  return url && !esImagenDeRedLocal(url) ? url : imagenPorProducto(producto)
+}
+
 export function imagenPorProducto(producto) {
   const texto = `${producto?.nombre || producto?.name || ''} ${producto?.descripcion || ''}`
     .normalize('NFD')

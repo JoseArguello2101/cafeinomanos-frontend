@@ -1,5 +1,5 @@
 import { solicitar } from '../api'
-import { categoriaCanonica, imagenRespaldo } from '../productos'
+import { categoriaCanonica, esImagenDeRedLocal, imagenRespaldo } from '../productos'
 
 /** Avisa a la aplicación que el inventario cambió tras un pedido. */
 export const EVENTO_PRODUCTOS = 'productos:actualizados'
@@ -11,7 +11,8 @@ function normalizarImagenes(producto) {
   const urls = [producto?.imagen_url, ...extras, producto?.imagen]
     .map(item => (typeof item === 'string' ? item : item?.url || item?.imagen_url || item?.imagen || ''))
     .map(url => String(url || '').trim())
-    .filter(Boolean)
+    // se descartan las imágenes de la red local cuando el sitio está publicado (ver esImagenDeRedLocal)
+    .filter(url => url && !esImagenDeRedLocal(url))
   return [...new Set(urls)]
 }
 
