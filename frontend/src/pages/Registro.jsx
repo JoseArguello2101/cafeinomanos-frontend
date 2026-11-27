@@ -49,8 +49,21 @@ function Registro() {
 
   function validar() {
     const nuevos = {}
-    if (!datos.nombre.trim()) nuevos.nombre = 'Ingresa tu nombre'
-    if (!datos.apellido.trim()) nuevos.apellido = 'Ingresa tu apellido'
+    const nombreLimpio = datos.nombre.trim()
+    const apellidoLimpio = datos.apellido.trim()
+
+    if (!nombreLimpio) {
+      nuevos.nombre = 'Ingresa tu nombre'
+    } else if (nombreLimpio.length < 2) {
+      nuevos.nombre = 'El nombre debe tener al menos 2 caracteres'
+    }
+
+    if (!apellidoLimpio) {
+      nuevos.apellido = 'Ingresa tu apellido'
+    } else if (apellidoLimpio.length < 2) {
+      nuevos.apellido = 'El apellido debe tener al menos 2 caracteres'
+    }
+
     if (!datos.email.trim()) {
       nuevos.email = 'Ingresa tu correo'
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datos.email.trim())) {

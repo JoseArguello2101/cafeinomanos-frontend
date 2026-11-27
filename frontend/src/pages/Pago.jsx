@@ -6,6 +6,7 @@ import { crearPedido } from '../services/pedido'
 import { EVENTO_PRODUCTOS } from '../services/productos'
 import EstadoOrden from '../components/EstadoOrden'
 import './Pago.css'
+import { mapearErroresPedidoBackend, validarDatosEntrega } from '../utils/checkout'
 
 function mensajeLinea(linea) {
   if (linea?.mensaje) return linea.mensaje
@@ -71,20 +72,10 @@ function Pago() {
     setErrores(actual => ({ ...actual, [name]: undefined }))
   }
 
-  function validar() {
-    const nuevos = {}
-    if (!formulario.nombre.trim()) nuevos.nombre = 'Ingresa tu nombre.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formulario.correo.trim())) nuevos.correo = 'Ingresa un correo válido.'
-    if (formulario.direccion.trim().length < 5) nuevos.direccion = 'Ingresa una dirección válida.'
-    if (formulario.comuna.trim().length < 2) nuevos.comuna = 'Ingresa una comuna válida.'
-    if (!['tarjeta', 'transferencia'].includes(formulario.metodo_pago)) nuevos.metodo_pago = 'Selecciona un medio de pago.'
-    return nuevos
-  }
-
   async function enviar(evento) {
     evento.preventDefault()
     setErrorGeneral('')
-    const nuevos = validar()
+    const nuevos = validarDatosEntrega(formulario)
     setErrores(nuevos)
     if (Object.keys(nuevos).length > 0) return
     if (!validacion?.aprobado) {
@@ -94,7 +85,7 @@ function Pago() {
     await registrarPedido()
   }
 
-  // Registra el pedido; si falla, la orden se muestra como rechazada con opción de reintentar.
+  // Registra el pedido; si falla, muestra los errores por campo y la opción de reintentar.
   async function registrarPedido() {
     setErrorEnvio('')
     setEnviando(true)
@@ -104,6 +95,10 @@ function Pago() {
       window.dispatchEvent(new Event(EVENTO_PRODUCTOS))
       navigate('/confirmacion')
     } catch (problema) {
+      const erroresCampos = mapearErroresPedidoBackend(problema.erroresPorCampo)
+      if (Object.keys(erroresCampos).length > 0) {
+        setErrores(actual => ({ ...actual, ...erroresCampos }))
+      }
       setErrorEnvio(problema.message || 'No se pudo registrar el pedido. Intenta de nuevo.')
       // El panel de estado queda arriba: se lleva la vista hasta él para que el cliente vea qué pasó.
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -111,7 +106,6 @@ function Pago() {
       setEnviando(false)
     }
   }
-
   // Estado que muestra la insignia del título: pendiente al entrar, verificando mientras se envía y rechazada si falló.
   let estadoOrden = 'pendiente'
   if (enviando) estadoOrden = 'verificando'
