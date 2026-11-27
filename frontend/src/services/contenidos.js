@@ -9,7 +9,7 @@ export const PAGINAS_CONTENIDO = [
 export const contenidoPorDefecto = {
   inicio: {
     titulo: 'EL PARAÍSO A UN SORBO.',
-    subtitulo: 'Café de especialidad para todos los días',
+    subtitulo: '',
     texto: 'El café puede ser el elemento fundamental para el día a día, por eso convierte tu vida en un paraíso jugoso y perfecto.',
     texto_secundario: '',
     imagen: '',

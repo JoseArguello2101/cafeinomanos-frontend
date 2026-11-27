@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { agregarAlCarrito, EVENTO_CARRITO } from '../services/carrito'
 
-function Mensaje({ mensaje }) {
+function Mensaje({ mensaje, varianteTarjeta = false }) {
   if (!mensaje) return null
   const exito = mensaje.tipo === 'exito'
+  if (varianteTarjeta) {
+    return (
+      <p
+        className={`catalogo-mensaje catalogo-mensaje--${exito ? 'exito' : 'error'}`}
+        role={exito ? 'status' : 'alert'}
+      >
+        {mensaje.texto}
+      </p>
+    )
+  }
   return (
     <span
       role={exito ? 'status' : 'alert'}
@@ -22,7 +32,9 @@ function Mensaje({ mensaje }) {
   )
 }
 
-function AgregarAlCarrito({ producto, compacto = false, rapido = false }) {
+function AgregarAlCarrito({ producto, compacto = false, rapido = false, children }) {
+  // En el catálogo el control se integra en el pie de la tarjeta; las demás vistas conservan su presentación.
+  const varianteTarjeta = compacto && !rapido
   const [cantidad, setCantidad] = useState(1)
   const [cargando, setCargando] = useState(false)
   const [mensaje, setMensaje] = useState(null)
@@ -73,11 +85,68 @@ function AgregarAlCarrito({ producto, compacto = false, rapido = false }) {
   }
 
   if (sinStock) {
+    if (varianteTarjeta) {
+      return (
+        <div className="catalogo-comprar">
+          <button type="button" className="catalogo-boton catalogo-boton--agotado" disabled>
+            Agotado
+          </button>
+          {children}
+        </div>
+      )
+    }
     return (
       <div style={{ marginTop: '12px' }}>
         <button type="button" disabled style={{ padding: '8px 14px', opacity: 0.6, cursor: 'not-allowed', width: compacto ? '100%' : 'auto' }}>
           Agotado
         </button>
+      </div>
+    )
+  }
+
+  if (varianteTarjeta) {
+    const cantidadActual = Number(cantidad) || 1
+    return (
+      <div className="catalogo-comprar">
+        <form className="catalogo-comprar-form" onSubmit={manejarEnvio}>
+          {/* El input mantiene la validación original; los botones solo cambian su valor. */}
+          <div className="catalogo-cantidad" role="group" aria-label={`Cantidad de ${producto.nombre}`}>
+            <button
+              type="button"
+              className="catalogo-cantidad-boton"
+              onClick={() => validarYCambiarCantidad(Math.max(1, cantidadActual - 1))}
+              disabled={cargando || cantidadActual <= 1}
+              aria-label={`Disminuir cantidad de ${producto.nombre}`}
+            >
+              -
+            </button>
+            <input
+              id={`cant-${producto.id}`}
+              className="catalogo-cantidad-input"
+              type="number"
+              min="1"
+              max={producto.stock}
+              value={cantidad}
+              onChange={evento => validarYCambiarCantidad(evento.target.value)}
+              disabled={cargando}
+              aria-label={`Cantidad de ${producto.nombre}`}
+            />
+            <button
+              type="button"
+              className="catalogo-cantidad-boton"
+              onClick={() => validarYCambiarCantidad(Math.min(producto.stock, cantidadActual + 1))}
+              disabled={cargando || cantidadActual >= producto.stock}
+              aria-label={`Aumentar cantidad de ${producto.nombre}`}
+            >
+              +
+            </button>
+          </div>
+          <button type="submit" className="catalogo-boton" disabled={cargando || cantidad === ''}>
+            {cargando ? 'Agregando…' : 'Añadir al carro'}
+          </button>
+        </form>
+        <Mensaje mensaje={mensaje} varianteTarjeta />
+        {children}
       </div>
     )
   }

@@ -5,17 +5,19 @@ import AgregarAlCarrito from './AgregarAlCarrito'
 
 /**
  * Tarjeta de un producto del catálogo público.
- * Muestra imagen principal, nombre, precio con moneda y disponibilidad.
- * Si el producto está agotado, la tarjeta se ve distinta y no permite agregarlo al carrito.
+ * Muestra nombre, imagen y un pie compacto con precio, stock y compra.
+ * Si el producto está agotado, la imagen se ve en gris y no permite agregarlo al carrito.
  */
 function TarjetaProducto({ producto, esAdmin = false }) {
-  // El backend marca como "agotado" a los productos con stock cero.
-  const agotado = producto.disponibilidad === 'agotado'
+  // Misma condición que usa el control de compra para desactivarse.
+  const sinStock = producto.stock <= 0 || producto.disponible === false
+  const agotado = producto.disponibilidad === 'agotado' || sinStock
   const ruta = `/producto/${producto.id}`
 
   return (
-    // La clase "--agotada" pone la imagen en gris y el borde discontinuo.
     <article className={`catalogo-tarjeta${agotado ? ' catalogo-tarjeta--agotada' : ''}`}>
+      <h2 className="catalogo-tarjeta-titulo">{producto.nombre}</h2>
+
       <Link className="catalogo-tarjeta-imagen" to={ruta} aria-label={`Consultar ${producto.nombre}${agotado ? ' (agotado)' : ''}`}>
         {/* Si la imagen del backend no carga, se reemplaza por una imagen local según el nombre del producto. */}
         <img
@@ -24,31 +26,32 @@ function TarjetaProducto({ producto, esAdmin = false }) {
           loading="lazy"
           onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }}
         />
-        {/* Sello "Agotado" sobre la imagen (decorativo: el texto accesible va en el aria-label del enlace). */}
-        {agotado && <span className="catalogo-sello" aria-hidden="true">Agotado</span>}
+        {/* Sello centrado sobre la imagen (decorativo: el texto accesible va en el aria-label del enlace). */}
+        {agotado && <span className="catalogo-sello" aria-hidden="true">AGOTADO</span>}
       </Link>
-      <div className="catalogo-tarjeta-cuerpo">
-        {/* Categoría y etiqueta de disponibilidad (texto + color). */}
-        <div className="catalogo-tarjeta-meta">
-          {producto.categoria && <span className="eyebrow">{producto.categoria}</span>}
-          <span className={`catalogo-badge catalogo-badge--${agotado ? 'agotado' : 'disponible'}`}>
-            {agotado ? 'Agotado' : 'Disponible'}
-          </span>
+
+      <div className="catalogo-tarjeta-pie">
+        <div className="catalogo-tarjeta-info">
+          <strong className="catalogo-precio-valor">{formatearPrecio(producto.precio, producto.moneda)}</strong>
+          <span className="catalogo-stock">{sinStock ? 'Sin stock' : `Stock: ${producto.stock}`}</span>
         </div>
-        <h2>{producto.nombre}</h2>
-        {producto.descripcion && <p>{producto.descripcion}</p>}
-        {/* Precio con su moneda (ej. "$3.800 CLP") y unidades disponibles. */}
-        <div className="catalogo-precio">
-          <strong>{formatearPrecio(producto.precio, producto.moneda)}</strong>
-          <span>{agotado ? 'Sin stock por ahora' : `${producto.stock} disponibles`}</span>
-        </div>
-        {/* "Editar" solo aparece para administradores. */}
-        <div className="catalogo-acciones">
-          <Link to={ruta}>Ver detalles</Link>
-          {esAdmin && <Link to={`/admin/productos?editar=${encodeURIComponent(producto.id)}`} aria-label={`Editar producto ${producto.nombre}`}>Editar</Link>}
-        </div>
-        {/* AgregarAlCarrito se desactiva solo cuando el producto no tiene stock. */}
-        <AgregarAlCarrito producto={producto} compacto />
+
+        {/* El control conserva su lógica de cantidad, stock y carrito; los enlaces van en el pie. */}
+        <AgregarAlCarrito producto={producto} compacto>
+          <div className="catalogo-enlaces">
+            <Link className="catalogo-ver-detalles" to={ruta}>Ver detalles</Link>
+            {/* "Editar" solo aparece para administradores. */}
+            {esAdmin && (
+              <Link
+                className="catalogo-editar"
+                to={`/admin/productos?editar=${encodeURIComponent(producto.id)}`}
+                aria-label={`Editar producto ${producto.nombre}`}
+              >
+                Editar
+              </Link>
+            )}
+          </div>
+        </AgregarAlCarrito>
       </div>
     </article>
   )

@@ -64,7 +64,9 @@ export function imagenPorProducto(producto) {
   if (texto.includes('capuccino') || texto.includes('cappuccino')) return capuccino
   if (texto.includes('mocha')) return mocha
   if (texto.includes('macchiato')) return macchiato
-  return capuccino
+  // Un producto nuevo no debe "convertirse" en Capuccino: si no hay imagen
+  // propia o falla su enlace, se muestra el neutro "Imagen no disponible".
+  return imagenRespaldo
 }
 
 export const ProductosContext = createContext(null)

@@ -1,5 +1,5 @@
 import { solicitar } from '../api'
-import { categoriaCanonica, imagenPorProducto } from '../productos'
+import { categoriaCanonica, imagenRespaldo } from '../productos'
 
 /** Avisa a la aplicación que el inventario cambió tras un pedido. */
 export const EVENTO_PRODUCTOS = 'productos:actualizados'
@@ -25,8 +25,8 @@ export function normalizarProducto(producto) {
     categoria: categoriaCanonica(producto?.categoria),
     precio: Number(producto?.precio) || 0,
     stock: Number(producto?.stock) || 0,
-    imagen: principal || imagenPorProducto(producto),
-    imagenes: imagenes.length ? imagenes : [imagenPorProducto(producto)],
+    imagen: principal || imagenRespaldo,
+    imagenes: imagenes.length ? imagenes : [imagenRespaldo],
     moneda: producto?.moneda || 'CLP',
     stock_reservado: Number(producto?.stock_reservado) || 0,
     estado: producto?.estado || '',

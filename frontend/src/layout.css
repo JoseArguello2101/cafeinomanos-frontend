@@ -15,7 +15,7 @@
 }
 .admin-shell .site-footer p { color: var(--muted) !important; }
 /* El fondo exterior acompaña el tema sin cambiar las otras vistas. */
-body:has(.admin-shell) { background: #faf7f0 !important; }
+body:has(.admin-shell) { background: #ffffff !important; }
 body:has(.admin-shell[data-theme='oscuro']) { background: #211b17 !important; }
 body:has(.admin-shell[data-theme='vintage']) { background: #eee2c9 !important; }
 body:has(.admin-shell[data-theme='pastel']) { background: #fcf5f0 !important; }
