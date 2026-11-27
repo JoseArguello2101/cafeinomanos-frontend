@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { solicitar, limpiarSesion } from '../api'
 import { obtenerCarrito, EVENTO_CARRITO, guardarRutaRetorno } from '../services/carrito'
+import logoCafe from '../assets/logo-cafe.png'
+import logoBlanco from '../assets/logo-blanco.png'
 import { TEMAS, guardarTemaSitio, nombreTema } from '../services/tema'
 import './Navbar.css'
 
-// temaSitio: el que eligió la administración; preferencia: el personal de este navegador (o null).
-function Navbar({ temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange }) {
+// tema: el que se ve (para el logo); temaSitio: el que eligió la administración;
+// preferencia: el personal de este navegador (o null).
+function Navbar({ tema, temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const retornoCompra = pathname === '/carrito' || pathname === '/pago' ? '/carrito' : undefined
@@ -104,6 +107,10 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange
 
   return (
     <nav className="site-nav" aria-label="Navegación principal">
+      <Link to="/" className="nav-logo">
+        <img src={tema === 'oscuro' ? logoBlanco : logoCafe} alt="Paraíso del Café" />
+      </Link>
+
       <div className="nav-grupo nav-izquierda">
         <Link to="/">Inicio</Link>
         <Link to="/catalogo">Catálogo</Link>
@@ -115,13 +122,6 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange
       </div>
 
       <div className="nav-grupo nav-derecha">
-        <Link to="/carrito" className="btn-nav btn-nav-secundario nav-carrito" aria-label={`Carrito, ${unidadesCarrito} unidades`} title="Carrito">
-          <svg className="nav-icono" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
-          </svg>
-          {unidadesCarrito > 0 && <span className="nav-carrito-badge" aria-hidden="true">{unidadesCarrito}</span>}
-        </Link>
-
         {usuario ? (
           <div className="nav-auth">
             {usuario?.es_admin ? (
@@ -217,6 +217,13 @@ function Navbar({ temaSitio, preferencia, onPreferenciaChange, onTemaSitioChange
             </ul>
           )}
         </div>
+
+        <Link to="/carrito" className="btn-nav btn-nav-secundario nav-carrito" aria-label={`Carrito, ${unidadesCarrito} unidades`} title="Carrito">
+          <svg className="nav-icono" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
+          </svg>
+          {unidadesCarrito > 0 && <span className="nav-carrito-badge" aria-hidden="true">{unidadesCarrito}</span>}
+        </Link>
       </div>
     </nav>
   )

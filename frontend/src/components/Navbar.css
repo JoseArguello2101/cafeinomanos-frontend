@@ -49,6 +49,8 @@
 }
 
 .site-shell .site-nav {
+  position: relative;
+  z-index: 10;
   display: grid;
   grid-template-columns: 1fr;
   justify-items: center;
@@ -57,10 +59,41 @@
   padding: 14px 16px;
   background: var(--nav-bg);
   color: var(--nav-texto);
-  box-shadow: 0 1px 0 var(--nav-linea);
   font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
+}
+
+/* fondo y línea inferior a todo el ancho de la pantalla, igual que el footer */
+.site-shell .site-nav::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-shadow: 0 -100vmax 0 100vmax var(--nav-bg), 0 1px 0 100vmax var(--line);
+  clip-path: inset(0 -100vmax -1px);
+  pointer-events: none;
+}
+
+.site-shell .nav-logo {
+  display: flex;
+}
+
+.site-shell .site-nav a.nav-logo {
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+}
+
+.site-shell .site-nav a.nav-logo:hover {
+  background: none;
+  opacity: 0.85;
+}
+
+.site-shell .nav-logo img {
+  display: block;
+  height: 48px;
+  width: auto;
 }
 
 .site-shell .nav-grupo {
@@ -164,17 +197,9 @@
   line-height: 1;
 }
 
-.site-shell .nav-centro a {
-  font-size: 1.35rem;
-  font-weight: 800;
-  padding: 6px 14px;
-  letter-spacing: 0.2px;
-}
-
+.site-shell .nav-centro a,
 .site-shell .nav-izquierda a {
-  font-size: 1.15rem;
-  font-weight: 800;
-  padding: 8px 18px;
+  padding: 8px 14px;
   border-radius: 999px;
 }
 
@@ -283,26 +308,25 @@
 }
 
 @media (min-width: 901px) {
+  /* logo, enlaces y botones repartidos en todo el ancho; el carrito queda al final */
   .site-shell .site-nav {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    justify-items: stretch;
-    gap: 16px;
-    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 24px;
   }
 
   .site-shell .nav-izquierda {
-    justify-self: end;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 4px;
   }
 
   .site-shell .nav-centro {
-    justify-self: center;
     white-space: nowrap;
   }
 
   .site-shell .nav-derecha {
-    justify-self: end;
     justify-content: flex-end;
     flex-wrap: nowrap;
     gap: 8px;
@@ -316,5 +340,29 @@
   .site-shell .site-nav a.btn-nav,
   .site-shell .site-nav button.btn-nav {
     padding: 6px 14px;
+  }
+}
+
+@media (min-width: 1150px) {
+  /* el navbar ocupa todo el ancho de la pantalla: logo a la izquierda,
+     enlaces al centro y botones a la derecha */
+  .site-shell .site-nav {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0;
+    margin-inline: calc(50% - 50vw);
+    padding-inline: 32px;
+  }
+
+  .site-shell .nav-izquierda {
+    margin-left: auto;
+  }
+
+  .site-shell .nav-centro {
+    margin-left: 4px;
+  }
+
+  .site-shell .nav-derecha {
+    margin-left: auto;
   }
 }
