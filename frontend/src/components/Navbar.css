@@ -246,18 +246,12 @@
   margin: 0;
 }
 
-/* Menú del administrador: título que aclara que el tema es para todos, y estado del guardado */
-.site-shell .nav-temas-lista .nav-temas-titulo,
+/* Menú del administrador: estado del guardado del tema predeterminado */
 .site-shell .nav-temas-lista .nav-temas-estado {
   padding: 6px 14px;
   color: var(--nav-texto);
   font-size: 12px;
   white-space: nowrap;
-}
-.site-shell .nav-temas-lista .nav-temas-titulo {
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 .site-shell .nav-temas-lista button:disabled {
   cursor: wait;
@@ -276,8 +270,10 @@
   color: var(--nav-texto);
   font: inherit;
   font-weight: 700;
+  /* nombre del tema pegado a la izquierda; el círculo de colores queda a la derecha */
   text-align: left;
-  /* "Tema del sitio (Vintage)" en una sola línea */
+  gap: 16px;
+  /* "Vintage (Predeterminado)" en una sola línea */
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 0.15s;
@@ -287,19 +283,30 @@
   background: var(--nav-hover);
 }
 
-.site-shell .nav-temas-lista button::before {
-  content: '';
-  width: 14px;
-  height: 14px;
-  margin-right: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--nav-borde);
-  background: var(--nav-acento);
-  flex-shrink: 0;
-}
-
 .site-shell .nav-temas-lista button.activo {
   background: var(--nav-activo);
+}
+
+/*
+ * Círculo con la paleta de cada tema: mitad color de fondo, mitad color de acento
+ * (los mismos valores de los tokens de index.css), así se ve el tema antes de elegirlo.
+ */
+.site-shell .nav-tema-paleta {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid var(--nav-borde);
+  background: linear-gradient(135deg, var(--paleta-fondo) 50%, var(--paleta-acento) 50%);
+}
+.site-shell .nav-tema-paleta--claro { --paleta-fondo: #ffffff; --paleta-acento: #65452f; }
+.site-shell .nav-tema-paleta--oscuro { --paleta-fondo: #211b17; --paleta-acento: #d7b28d; }
+.site-shell .nav-tema-paleta--vintage { --paleta-fondo: #eee2c9; --paleta-acento: #745033; }
+.site-shell .nav-tema-paleta--pastel { --paleta-fondo: #fcf5f0; --paleta-acento: #795c60; }
+
+/* el tema elegido, además del fondo resaltado, lleva un anillo alrededor del círculo */
+.site-shell .nav-temas-lista button.activo .nav-tema-paleta {
+  box-shadow: 0 0 0 2px var(--nav-menu-bg), 0 0 0 4px var(--nav-texto);
 }
 
 @keyframes nav-temas-aparece {
