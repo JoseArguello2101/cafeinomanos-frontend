@@ -19,14 +19,29 @@ function QuienesSomos() {
 
         <figure className="quienes-figura">
           <img className="quienes-imagen" src={empleadoDelMes} alt="Empleado del mes" />
-          <figcaption className="quienes-placa">
-            <span className="quienes-placa-estrella" aria-hidden="true">⭐</span>
-            EMPLEADO DEL MES
-          </figcaption>
         </figure>
-
-        <Link to="/catalogo" className="btn btn-primary quienes-cta">Explorar catálogo</Link>
       </section>
+
+      <hr className="quienes-separador quienes-separador--corto" />
+
+      <section className="quienes-colaboradores" aria-labelledby="colaboradores-titulo">
+        <h2 id="colaboradores-titulo" className="quienes-titulo quienes-titulo-seccion">
+          COLABORADORES EJECUTIVOS DE ALTO NIVEL
+        </h2>
+
+        <ul className="quienes-colaboradores-grid">
+          <li><span className="quienes-colaboradores-etiqueta">Patricio Chaug</span></li>
+          <li><span className="quienes-colaboradores-etiqueta">Gabriel Moreno</span></li>
+          <li><span className="quienes-colaboradores-etiqueta">Brandon Valdés</span></li>
+          <li><span className="quienes-colaboradores-etiqueta">José Argüelo</span></li>
+          <li><span className="quienes-colaboradores-etiqueta">Javiera Fuentealba</span></li>
+          <li><span className="quienes-colaboradores-etiqueta">Cristóbal Garrido</span></li>
+        </ul>
+      </section>
+
+      <div className="quienes-cierre">
+        <Link to="/catalogo" className="btn btn-primary quienes-cta">Explorar catálogo</Link>
+      </div>
     </div>
   )
 }
