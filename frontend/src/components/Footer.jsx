@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useContenidos } from '../contenidos'
+import logoCafe from '../assets/logo-cafe.png'
+import logoBlanco from '../assets/logo-blanco.png'
 import './Footer.css'
 
-function Footer() {
+function Footer({ tema }) {
   // los datos de contacto vienen de los contenidos editables por el administrador
   const { contenidos } = useContenidos() || {}
   const contacto = contenidos?.contacto || {}
@@ -12,7 +14,7 @@ function Footer() {
     <footer className="site-footer pie">
       <div className="pie-columnas">
         <div>
-          <p className="pie-marca">Paraíso del Café</p>
+          <img src={tema === 'oscuro' ? logoBlanco : logoCafe} alt="Paraíso del Café" className="pie-logo" />
           <p>Un sorbo al paraíso</p>
         </div>
 
