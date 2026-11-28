@@ -130,3 +130,40 @@
   .compra-item strong { grid-column: 2; }
   .compra-eliminar { grid-column: 2; justify-self: start; }
 }
+
+/* Panel "¿Cómo quieres continuar?" al ir a pagar sin sesión */
+.opciones-pago { margin-top: 20px; }
+.opciones-pago h2:focus { outline: none; }
+.opciones-pago-texto { margin: 4px 0 14px !important; font-size: 13px; color: var(--muted); }
+.opciones-pago-lista { display: grid; gap: 10px; }
+.opciones-pago-opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.opciones-pago-opcion strong { font-size: 15px; }
+.opciones-pago-opcion span { font-size: 13px; color: var(--muted); }
+.opciones-pago-opcion:hover,
+.opciones-pago-opcion:focus-visible { border-color: var(--accent); }
+.opciones-pago-opcion--principal { border-color: var(--accent); background: var(--soft); }
+.opciones-pago-cerrar {
+  margin-top: 12px;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: underline;
+  background: none;
+  border: none;
+  cursor: pointer;
+}

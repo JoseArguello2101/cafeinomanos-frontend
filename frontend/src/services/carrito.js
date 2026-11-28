@@ -157,6 +157,9 @@ export async function validarCarrito(itemsEnviados = [], signal) {
     const resultado = await solicitar('/carrito/validar/', {
       method: 'POST',
       signal,
+      // también lo usa el comprador invitado (sin sesión); con sesión se envía su token
+      auth: false,
+      conToken: true,
       datos: {
         session_id: sessionId,
         ...(itemsEnviados.length ? { items: itemsEnviados } : {}),

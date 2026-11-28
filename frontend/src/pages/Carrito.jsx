@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { pesos, imagenPorProducto, imagenSegura } from '../productos'
 import {
   actualizarCantidad,
@@ -9,13 +9,62 @@ import {
   obtenerCarrito,
 } from '../services/carrito'
 import { EVENTO_PRODUCTOS } from '../services/productos'
+import { activarModoInvitado } from '../services/pedido'
 import './Carrito.css'
+
+/**
+ * Panel que aparece al ir a pagar sin sesión iniciada: el cliente elige cómo seguir.
+ * - Continuar como invitado: paga sin cuenta; solo se pide un correo para enviarle la información.
+ * - Iniciar sesión: entra con su cuenta y vuelve directo al pago.
+ * - Seguir comprando: vuelve al catálogo.
+ */
+function OpcionesPago({ alCerrar }) {
+  const navigate = useNavigate()
+  const titulo = useRef(null)
+
+  // al abrir, el foco pasa al panel para que el lector de pantalla lo anuncie
+  useEffect(() => { titulo.current?.focus() }, [])
+
+  function comoInvitado() {
+    activarModoInvitado()
+    navigate('/pago')
+  }
+
+  function iniciarSesion() {
+    guardarRutaRetorno('/pago')
+    navigate('/login', { state: { desde: '/pago' } })
+  }
+
+  return (
+    <div className="compra-tarjeta opciones-pago" role="region" aria-labelledby="opciones-pago-titulo">
+      <h2 id="opciones-pago-titulo" tabIndex={-1} ref={titulo}>¿Cómo quieres continuar?</h2>
+      <p className="opciones-pago-texto">No iniciaste sesión. Puedes pagar sin crear una cuenta.</p>
+      <div className="opciones-pago-lista">
+        <button type="button" className="opciones-pago-opcion opciones-pago-opcion--principal" onClick={comoInvitado}>
+          <strong>Continuar con el pago como invitado</strong>
+          <span>Sin cuenta. Solo te pediremos un correo para enviarte la información de tu compra.</span>
+        </button>
+        <button type="button" className="opciones-pago-opcion" onClick={iniciarSesion}>
+          <strong>Iniciar sesión</strong>
+          <span>Usa tu cuenta para guardar la compra en tu historial.</span>
+        </button>
+        <Link to="/catalogo" className="opciones-pago-opcion">
+          <strong>Seguir comprando</strong>
+          <span>Vuelve al catálogo; tu carrito se mantiene.</span>
+        </Link>
+      </div>
+      <button type="button" className="opciones-pago-cerrar" onClick={alCerrar}>Volver al carrito</button>
+    </div>
+  )
+}
 
 function Carrito() {
   const location = useLocation()
   const mensajeRetorno = location.state?.mensajeCarrito || ''
   const usuario = JSON.parse(localStorage.getItem('usuario') || 'null')
   const autenticado = Boolean(localStorage.getItem('token') && usuario)
+  // panel "¿Cómo quieres continuar?"; se abre solo si /pago mandó de vuelta a un visitante sin sesión
+  const [mostrarOpciones, setMostrarOpciones] = useState(Boolean(location.state?.elegirComoPagar))
   const [carrito, setCarrito] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -227,11 +276,19 @@ function Carrito() {
               <button type="button" className="compra-bloqueado" disabled>
                 Corrige tu carrito para pagar
               </button>
-            ) : (
+            ) : autenticado ? (
               <Link to="/pago">Continuar al pago</Link>
+            ) : (
+              // sin sesión: primero se elige entre invitado, iniciar sesión o seguir comprando
+              <button type="button" onClick={() => setMostrarOpciones(true)} aria-expanded={mostrarOpciones}>
+                Continuar al pago
+              </button>
             )}
             <Link to="/catalogo" className="compra-secundario">Seguir comprando</Link>
           </div>
+          {mostrarOpciones && !autenticado && !requiereRevision && (
+            <OpcionesPago alCerrar={() => setMostrarOpciones(false)} />
+          )}
         </div>
       )}
     </section>
