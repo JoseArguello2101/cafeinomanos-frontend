@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import AdminNav from '../components/AdminNav'
 import { useSearchParams } from 'react-router-dom'
 import { useProductos, productosIniciales, categorias, pesos, imagenPorProducto } from '../productos'
-import { crearProducto, actualizarProducto, subirImagen } from '../services/productos'
+import { crearProducto, actualizarProducto, subirImagen, EVENTO_PRODUCTOS } from '../services/productos'
+import ModalAjusteStock from '../components/ModalAjusteStock'
 import './Admin.css'
 import './AdminProductos.css'
 
@@ -39,11 +40,29 @@ export default function AdminProductos({ demo = false }) {
   const [mensaje, setMensaje] = useState('')
   const [errorServidor, setErrorServidor] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [productoAjuste, setProductoAjuste] = useState(null)
   const [subiendo, setSubiendo] = useState(false)
   const formulario = useRef(null)
   const aplicado = useRef(false)
   const archivoRef = useRef(null)
   const indiceArchivo = useRef(0)
+
+  function alAjustarStock(respuesta) {
+    const info = respuesta.producto
+    aplicar(actual => actual.map(item => (
+      String(item.id) === String(info.id)
+        ? {
+          ...item,
+          stock: info.stock_nuevo,
+          stock_reservado: info.stock_reservado ?? item.stock_reservado,
+          disponible: info.disponible,
+          disponibilidad: info.stock_nuevo > 0 && info.disponible !== false ? 'disponible' : 'agotado',
+        }
+        : item
+    )))
+    if (!demo) window.dispatchEvent(new Event(EVENTO_PRODUCTOS))
+    setMensaje(respuesta.message || 'Stock actualizado correctamente.')
+  }
 
   useEffect(() => {
     if (aplicado.current || !seleccionado) return
@@ -244,8 +263,12 @@ export default function AdminProductos({ demo = false }) {
         {campo('nombre', 'Nombre')}
         <div className="producto-campo"><label htmlFor="producto-descripcion">Descripción</label><textarea id="producto-descripcion" name="descripcion" rows={3} required value={datos.descripcion} aria-invalid={!!errores.descripcion} aria-describedby={errores.descripcion ? 'producto-error-descripcion' : undefined} onChange={evento => setDatos({ ...datos, descripcion: evento.target.value })} /><span className="producto-error" id="producto-error-descripcion">{errores.descripcion}</span></div>
         <div className="producto-campo"><label htmlFor="producto-categoria">Categoría</label><select id="producto-categoria" name="categoria" value={datos.categoria} required aria-invalid={!!errores.categoria} aria-describedby={errores.categoria ? 'producto-error-categoria' : undefined} onChange={evento => setDatos({ ...datos, categoria: evento.target.value })}><option value="">Selecciona una categoría</option>{categorias.map(item => <option key={item}>{item}</option>)}</select><span className="producto-error" id="producto-error-categoria">{errores.categoria}</span></div>
-        <div className="producto-numeros">{campo('precio', 'Precio (CLP)', 'number')}{campo('stock', 'Stock (unidades)', 'number')}</div>
-        {campo('stock_reservado', 'Stock reservado (unidades)', 'number')}
+        <div className="producto-numeros">
+          {campo('precio', 'Precio (CLP)', 'number')}
+          {editando
+            ? <div className="producto-campo"><label>Stock actual</label><input type="text" value={`${datos.stock} unidades`} disabled /><small>Usa «Ajustar stock» en la lista para modificar existencias.</small></div>
+            : campo('stock', 'Stock inicial (unidades)', 'number')}
+        </div>
         <div className="producto-campo">
           <label>Imágenes del producto (4 a 6)</label>
           <small>Usa URLs públicas http/https o sube un archivo. La primera será la imagen principal.</small>
@@ -263,7 +286,58 @@ export default function AdminProductos({ demo = false }) {
         </div>
         <div className="producto-form-acciones"><button type="submit" className="primary" disabled={guardando}>{guardando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Registrar producto'}</button><button type="button" disabled={guardando} onClick={() => { limpiar(); setMensaje(''); formulario.current.querySelector('[name="nombre"]').focus() }}>{editando ? 'Cancelar edición' : 'Limpiar formulario'}</button></div>
       </form>
-      <section className="productos-inventario" aria-labelledby="inventario-titulo"><h2 id="inventario-titulo">Productos registrados <small>({productos.length})</small></h2><p className="producto-ayuda">Selecciona un producto para modificar sus datos.</p>{!demo && contexto.cargando && <p role="status">Cargando productos…</p>}<div className="productos-items">{productos.map(producto => <article className="producto-resumen" key={producto.id}>{producto.imagen && <img src={producto.imagen} alt={producto.nombre} onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }} />}<div><small>{producto.categoria}</small><h3>{producto.nombre}</h3><p>{producto.descripcion}</p><strong>{pesos.format(producto.precio)}</strong><p>{producto.stock === 0 ? 'Sin stock' : `${producto.stock} unidades disponibles`}</p><button type="button" aria-label={`Editar producto ${producto.nombre}`} onClick={() => editar(producto)}>Editar</button></div></article>)}</div></section>
+      <section className="productos-inventario" aria-labelledby="inventario-titulo">
+        <h2 id="inventario-titulo">Productos registrados <small>({productos.length})</small></h2>
+        <p className="producto-ayuda">Selecciona un producto para modificar sus datos o ajustar su stock.</p>
+        {!demo && contexto.cargando && <p role="status">Cargando productos…</p>}
+        <div className="productos-items">
+          {productos.map(producto => (
+            <article className="producto-resumen" key={producto.id}>
+              {producto.imagen && (
+                <img
+                  src={producto.imagen}
+                  alt={producto.nombre}
+                  onError={evento => { evento.currentTarget.onerror = null; evento.currentTarget.src = imagenPorProducto(producto) }}
+                />
+              )}
+              <div>
+                <small>{producto.categoria}</small>
+                <h3>{producto.nombre}</h3>
+                <p>{producto.descripcion}</p>
+                <strong>{pesos.format(producto.precio)}</strong>
+                <p>{producto.stock === 0 ? 'Sin stock' : `${producto.stock} unidades disponibles`}</p>
+                <div className="producto-resumen-acciones">
+                  <button
+                    type="button"
+                    aria-label={`Editar producto ${producto.nombre}`}
+                    onClick={() => editar(producto)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="primary"
+                    aria-label={`Ajustar stock de ${producto.nombre}`}
+                    onClick={() => setProductoAjuste(producto)}
+                  >
+                    Ajustar stock
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
+
+    {productoAjuste && (
+      <ModalAjusteStock
+        key={productoAjuste.id}
+        producto={productoAjuste}
+        demo={demo}
+        onGuardado={alAjustarStock}
+        onCerrar={() => setProductoAjuste(null)}
+      />
+    )}
   </section>
 }

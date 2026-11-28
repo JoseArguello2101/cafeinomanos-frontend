@@ -120,6 +120,27 @@ export async function actualizarProducto(id, datos) {
   }
 }
 
+export async function ajustarStockProducto(id, nuevoStock, motivo = '') {
+  const resultado = await solicitar(`/admin/productos/${encodeURIComponent(id)}/ajuste-stock/`, {
+    method: 'POST',
+    datos: {
+      nuevo_stock: Number(nuevoStock),
+      motivo: motivo.trim(),
+    },
+  })
+  if (!resultado?.producto) {
+    throw new Error('El backend no devolvió el resultado del ajuste de stock.')
+  }
+  return resultado
+}
+
+export async function obtenerHistorialStock(id, signal) {
+  const resultado = await solicitar(`/admin/productos/${encodeURIComponent(id)}/ajustes-stock/`, {
+    signal,
+  })
+  return Array.isArray(resultado?.data) ? resultado.data : []
+}
+
 export async function eliminarProducto(id) {
   return solicitar(`/productos/${encodeURIComponent(id)}/`, { method: 'DELETE' })
 }
