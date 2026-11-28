@@ -2,6 +2,45 @@ import { solicitar } from '../api'
 import { obtenerSesionCarrito } from './carrito'
 
 const CLAVE_ULTIMO_PEDIDO = 'ultimo_pedido'
+// Claves de las compras como invitado: { idPedido: clave }. Con ellas el invitado consulta su orden.
+const CLAVE_PEDIDOS_INVITADO = 'pedidos_invitado'
+// Marca de que el cliente eligió "Continuar como invitado" en esta sesión del navegador.
+const CLAVE_MODO_INVITADO = 'compra_invitado'
+
+function leerClavesInvitado() {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_PEDIDOS_INVITADO)) || {}
+  } catch {
+    return {}
+  }
+}
+
+/** Guarda la clave que entregó el backend para una orden creada como invitado. */
+function guardarClaveInvitado(pedidoId, clave) {
+  if (!pedidoId || !clave) return
+  const claves = leerClavesInvitado()
+  claves[pedidoId] = clave
+  localStorage.setItem(CLAVE_PEDIDOS_INVITADO, JSON.stringify(claves))
+}
+
+/** Cabecera con la clave del invitado para una orden, si la tiene guardada. */
+function cabeceraInvitado(pedidoId) {
+  const clave = leerClavesInvitado()[pedidoId]
+  return clave ? { 'X-Pedido-Token': clave } : {}
+}
+
+/** El cliente eligió comprar sin cuenta (dura mientras la pestaña siga abierta). */
+export function activarModoInvitado() {
+  sessionStorage.setItem(CLAVE_MODO_INVITADO, '1')
+}
+
+export function esModoInvitado() {
+  return sessionStorage.getItem(CLAVE_MODO_INVITADO) === '1'
+}
+
+export function desactivarModoInvitado() {
+  sessionStorage.removeItem(CLAVE_MODO_INVITADO)
+}
 
 /**
  * Confirma el carrito en el backend. No envía datos de tarjeta ni realiza cobros:
@@ -25,6 +64,8 @@ export async function crearPedido(cliente, operacionId) {
   })
 
   const pedido = normalizarPedido(resultado.pedido, cliente.metodo_pago)
+  // compra como invitado: el backend entrega una clave para poder consultar la orden sin cuenta
+  guardarClaveInvitado(pedido.id, resultado.token_invitado)
   sessionStorage.setItem(CLAVE_ULTIMO_PEDIDO, JSON.stringify(pedido))
   return pedido
 }
@@ -80,7 +121,13 @@ export function normalizarPedido(datos, metodoPago = '') {
  * Conserva datos locales no persistidos por backend (medio de pago solicitado).
  */
 export async function obtenerPedido(id, signal) {
-  const resultado = await solicitar(`/pedidos/${encodeURIComponent(id)}/`, { signal })
+  // con sesión se usa el token de la cuenta; sin sesión, la clave de invitado de esa orden
+  const resultado = await solicitar(`/pedidos/${encodeURIComponent(id)}/`, {
+    signal,
+    auth: false,
+    conToken: true,
+    cabeceras: cabeceraInvitado(id),
+  })
   const guardado = leerUltimoPedido()
   const metodoPago = String(guardado?.id) === String(resultado.pedido?.id)
     ? (guardado?.cliente?.metodo_pago || '')

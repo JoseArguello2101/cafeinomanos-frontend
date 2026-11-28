@@ -24,3 +24,14 @@
 @media (max-width: 600px) {
   .compra-formulario .campo-doble { grid-template-columns: 1fr; }
 }
+
+/* Aviso de compra como invitado sobre el formulario */
+.compra-aviso-invitado {
+  margin: 0 0 14px !important;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}

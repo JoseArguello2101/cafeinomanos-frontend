@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { pesos } from '../productos'
 import { EVENTO_CARRITO, validarCarrito } from '../services/carrito'
-import { crearPedido } from '../services/pedido'
+import { crearPedido, esModoInvitado } from '../services/pedido'
 import { EVENTO_PRODUCTOS } from '../services/productos'
 import EstadoOrden from '../components/EstadoOrden'
 import './Pago.css'
@@ -24,6 +24,9 @@ function Pago() {
   // `usuario` se lee de localStorage en cada render (objeto nuevo cada vez): el efecto depende de este
   // booleano para no repetir la validación del carrito en cada render.
   const hayUsuario = Boolean(usuario)
+  // sin sesión, solo se puede pagar si el cliente eligió "Continuar como invitado" en el carrito
+  const conSesion = Boolean(token && usuario)
+  const invitado = !conSesion && esModoInvitado()
   const [validacion, setValidacion] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [errorCarrito, setErrorCarrito] = useState('')
@@ -43,16 +46,17 @@ function Pago() {
   })
 
   useEffect(() => {
-    if (!token || !hayUsuario || esAdmin) return undefined
+    if (((!token || !hayUsuario) && !invitado) || esAdmin) return undefined
     const controlador = new AbortController()
     validarCarrito([], controlador.signal)
       .then(setValidacion)
       .catch(problema => { if (problema.name !== 'AbortError') setErrorCarrito(problema.message) })
       .finally(() => { if (!controlador.signal.aborted) setCargando(false) })
     return () => controlador.abort()
-  }, [token, esAdmin, hayUsuario])
+  }, [token, esAdmin, hayUsuario, invitado])
 
-  if (!token || !usuario) return <Navigate to="/login" replace state={{ desde: '/pago' }} />
+  // sin sesión y sin haber elegido cómo pagar: vuelve al carrito con el panel de opciones abierto
+  if (!conSesion && !invitado) return <Navigate to="/carrito" replace state={{ elegirComoPagar: true }} />
   if (esAdmin) {
     return (
       <section className="compra">
@@ -194,6 +198,13 @@ function Pago() {
 
       <form className="compra-formulario" onSubmit={enviar} noValidate>
         <h2>Datos de entrega</h2>
+        {invitado && (
+          // aviso de compra sin cuenta: el correo es a donde llega la información de la compra
+          <p className="compra-aviso-invitado" role="note">
+            Estás comprando <strong>como invitado</strong>. Te enviaremos la información de tu compra al correo que indiques.{' '}
+            <Link to="/login" state={{ desde: '/pago' }}>Prefiero iniciar sesión</Link>
+          </p>
+        )}
         <label>Nombre completo
           <input name="nombre" type="text" autoComplete="name" value={formulario.nombre} onChange={cambiar} className={errores.nombre ? 'input-error' : ''} />
           {errores.nombre && <span className="compra-error" role="alert">{errores.nombre}</span>}

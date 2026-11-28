@@ -40,7 +40,7 @@ function mensajeDeError(resultado, respuesta) {
  *        (útil para el carrito: identifica al usuario cuando está autenticado).
  */
 export async function solicitar(ruta, {
-  method = 'GET', datos, signal, auth = true, conToken = false,
+  method = 'GET', datos, signal, auth = true, conToken = false, cabeceras = {},
 } = {}) {
   const token = localStorage.getItem('token')
   if (auth && !token) {
@@ -56,6 +56,8 @@ export async function solicitar(ruta, {
       headers: {
         ...(enviarToken ? { Authorization: `Token ${token}` } : {}),
         ...(datos && !esFormData ? { 'Content-Type': 'application/json' } : {}),
+        // cabeceras extra de cada llamada (ej. X-Pedido-Token de una compra como invitado)
+        ...cabeceras,
       },
       ...(datos ? { body: esFormData ? datos : JSON.stringify(datos) } : {}),
     })
