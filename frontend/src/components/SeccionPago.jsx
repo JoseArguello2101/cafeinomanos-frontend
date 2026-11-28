@@ -3,25 +3,29 @@ import { iniciarPago } from '../services/pago'
 import { formatearPrecio } from '../services/productos'
 import './SeccionPago.css'
 
-// Página local que hace de formulario de la pasarela de prueba (el token del sandbox no existe en Transbank).
-const ACCION_PASARELA = '/pago/pasarela-sandbox'
+// Página local que hace de pasarela cuando el backend está en modo simulado (sin Transbank).
+const ACCION_PASARELA_SIMULADA = '/pago/pasarela-sandbox'
 
 // Texto del botón según el estado de la orden.
 const TEXTO_BOTON = {
-  pendiente: 'Pagar con pasarela de prueba',
+  pendiente: 'Pagar con Webpay',
   verificando: 'Continuar pago',
   rechazada: 'Reintentar pago',
 }
 
 /**
  * Envía al cliente al formulario de la pasarela con los datos que entregó el backend.
- * Igual que una pasarela real, se hace con un formulario que lleva el token de la transacción.
+ * - Modo Transbank: formulario POST con token_ws a la URL de Webpay (lo que pide Transbank).
+ * - Modo simulado: formulario GET a la pasarela de prueba local.
  */
 function enviarAFormularioPasarela(intento) {
+  const esTransbank = intento.modo === 'transbank'
   const formulario = document.createElement('form')
-  formulario.method = 'GET'
-  formulario.action = ACCION_PASARELA
-  const campos = { token_ws: intento.token, pedido: intento.pedidoId }
+  formulario.method = esTransbank ? 'POST' : 'GET'
+  formulario.action = esTransbank ? intento.url : ACCION_PASARELA_SIMULADA
+  const campos = esTransbank
+    ? { token_ws: intento.token }
+    : { token_ws: intento.token, pedido: intento.pedidoId }
   Object.entries(campos).forEach(([nombre, valor]) => {
     const campo = document.createElement('input')
     campo.type = 'hidden'
@@ -66,10 +70,12 @@ function SeccionPago({ pedido, estado }) {
       {/* Resumen de lo que se va a pagar. */}
       <dl className="seccion-pago-datos">
         <div><dt>Total a pagar</dt><dd className="seccion-pago-monto">{formatearPrecio(pedido.total, 'CLP')}</dd></div>
-        <div><dt>Medio de pago</dt><dd>Pasarela de prueba (sandbox)</dd></div>
+        <div><dt>Medio de pago</dt><dd>Webpay Plus de Transbank (ambiente de integración)</dd></div>
       </dl>
       <p className="seccion-pago-aviso">
-        Es un entorno de prueba: no se cobra dinero real y no se piden datos de tarjeta.
+        Es el ambiente de pruebas de Transbank: no se cobra dinero real.
+        Usa la tarjeta de prueba VISA 4051 8856 0044 6623 (CVV 123, cualquier fecha) y,
+        en la autenticación del banco, RUT 11.111.111-1 y clave 123.
         {estado === 'verificando' && ' Si no terminaste el pago en la pasarela, puedes continuarlo.'}
       </p>
 
